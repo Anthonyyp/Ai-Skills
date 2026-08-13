@@ -4,14 +4,21 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 
 ## Skills
 
-### Image & Video
+### Image
 
 | Skill | What it does |
 |---|---|
 | [gimp-image-editor](gimp-image-editor/) | GIMP control via Script-Fu / Python batch CLI — layered compositing, XCF/PSD, text layers, GEGL filters, chroma key, batch export, layer-preserving PDF/EPS. |
 
+### Audio & Video
+
+| Skill | What it does |
+|---|---|
+| [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. |
+
 <!--
 Add new skills as a row above, under the right category heading.
+Add a new "### Category" section when nothing fits.
 Keep the "what it does" cell to one line.
 -->
 
@@ -60,12 +67,21 @@ without buying anything.
 ```
 Ai-Skills/
   README.md
-  gimp-image-editor/
+  ffmpeg/
     SKILL.md          <- name + description frontmatter; what gets loaded
-    references/       <- detail loaded on demand
+    recipes.md        <- detail loaded on demand
+    reference.md
+    troubleshooting.md
+  gimp-image-editor/
+    SKILL.md
+    references/
     scripts/
     examples/
     tests/
 ```
+
+A skill is just a folder with a `SKILL.md`. The frontmatter `description` is
+what the agent matches against, so it carries the trigger wording; everything
+else is loaded only when the skill is actually used.
 
 Each skill's own README covers its requirements and how to verify it.
