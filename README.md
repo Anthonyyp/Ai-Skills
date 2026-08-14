@@ -24,35 +24,20 @@ Keep the "what it does" cell to one line.
 
 ## Install
 
-Copy the skill folder into your skills directory:
+These follow the [Agent Skills open standard](https://github.com/agentskills/agentskills),
+so they work in any tool that supports it. Each tool documents its own install
+locations:
 
-```bash
-# personal — available in every project
-mkdir -p ~/.claude/skills
-cp -r gimp-image-editor ~/.claude/skills/
+| Tool | Docs |
+|---|---|
+| Claude Code / Claude | [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills) |
+| OpenAI Codex / ChatGPT | [learn.chatgpt.com/docs/build-skills](https://learn.chatgpt.com/docs/build-skills) |
+| Cursor | [cursor.com/docs/skills](https://cursor.com/docs/skills) |
+| Gemini CLI | [Agent Skills docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/using-agent-skills.md) |
 
-# or per-project, committed alongside your code
-mkdir -p .claude/skills && cp -r gimp-image-editor .claude/skills/
-```
-
-Windows PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
-Copy-Item -Recurse -Force .\gimp-image-editor "$env:USERPROFILE\.claude\skills\"
-```
-
-To take everything at once, clone and symlink each skill:
-
-```bash
-git clone https://github.com/Anthonyyp/Ai-Skills.git ~/Ai-Skills
-mkdir -p ~/.claude/skills
-for d in ~/Ai-Skills/*/; do
-  [ -f "$d/SKILL.md" ] && ln -sfn "$d" ~/.claude/skills/"$(basename "$d")"
-done
-```
-
-Start a new session afterwards — skills are picked up at session start.
+Short version: drop a skill folder in your agent's skills directory.
+`~/.agents/skills/` is the cross-tool location — Codex, Cursor and Gemini CLI
+all read it. Claude Code uses `~/.claude/skills/`, which Cursor also reads.
 
 ## Layout
 

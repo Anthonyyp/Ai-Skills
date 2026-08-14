@@ -1,37 +1,10 @@
 # GIMP Image Editor
 
-Drive GIMP headlessly from the CLI (Script-Fu + Python batch) — — layered compositing, text layers,
-GEGL filters, chroma keying, batch conversion, PSD/PDF/EPS output, and
-splitting layers back out of a page file.
+Drive GIMP headlessly from the CLI (Script-Fu + Python batch) — layered
+compositing, text layers, GEGL filters, chroma keying, batch conversion,
+PSD/PDF/EPS output, and splitting layers back out of a page file.
 
-## Install
-
-Copy the `gimp/` folder into your skills directory:
-
-| Scope | Location |
-|---|---|
-| Personal (all projects) | `~/.claude/skills/gimp-image-editor/` |
-| One project (shareable via git) | `<repo>/.claude/skills/gimp-image-editor/` |
-
-```bash
-# personal
-mkdir -p ~/.claude/skills
-cp -r gimp-image-editor ~/.claude/skills/
-
-# or per-project
-mkdir -p .claude/skills && cp -r gimp-image-editor .claude/skills/
-```
-
-Windows PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
-Copy-Item -Recurse -Force .\gimp-image-editor "$env:USERPROFILE\.claude\skills\"
-```
-
-Restart Claude Code (or start a new session) so the skill is picked up. Ask
-Claude something like *"use GIMP to add a watermark to these"* and it will
-load the skill.
+Install: see the [links in the repo README](../README.md#install).
 
 ## Requirements
 

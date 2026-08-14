@@ -5,19 +5,7 @@ lossless cut + concat, re-encoding (x264/x265/SVT-AV1, plus NVENC/QSV/AMF),
 filter_complex pipelines, GIF↔video with palette generation, subtitle burn-in,
 overlays, loudness normalization, scene detection, xfade, and HLS/DASH.
 
-## Install
-
-```bash
-mkdir -p ~/.claude/skills
-cp -r ffmpeg ~/.claude/skills/
-```
-
-```powershell
-New-Item -ItemType Directory -Force "$env:USERPROFILE\.claude\skills" | Out-Null
-Copy-Item -Recurse -Force .\ffmpeg "$env:USERPROFILE\.claude\skills\"
-```
-
-Start a new session afterwards — skills are picked up at session start.
+Install: see the [links in the repo README](../README.md#install).
 
 ## Requirements
 
