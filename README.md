@@ -24,11 +24,7 @@ Keep the "what it does" cell to one line.
 
 ## Install
 
-Skills must sit **exactly one level** under a `skills/` directory —
-`skills/<skill-name>/SKILL.md`. Anything nested deeper is silently ignored.
-That's why this repo is flat, and why the category headings in the index above
-are labels rather than directories: copy a skill folder straight across, and
-don't group them into subfolders on the way in.
+Copy the skill folder into your skills directory:
 
 ```bash
 # personal — available in every project
@@ -60,11 +56,9 @@ Start a new session afterwards — skills are picked up at session start.
 
 ## Layout
 
-Flat, one folder per skill, because that mirrors the install target exactly and
-keeps the repo clone-installable. Categories live as headings in the table
-above rather than as directories; the agent routes on each skill's
-`description` field and never sees folder names, so nesting would add friction
-without buying anything.
+Flat, one folder per skill, mirroring the install target so the repo is
+clone-installable. Categories are headings in the table above, not directories —
+the agent routes on each skill's `description` and never sees folder names.
 
 ```
 Ai-Skills/
