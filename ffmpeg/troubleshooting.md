@@ -1,6 +1,6 @@
 # FFmpeg Troubleshooting
 
-Failure modes you'll hit on this Windows machine. Look here first when output looks wrong.
+Failure modes you're likely to hit, and what actually causes them. Look here first when output looks wrong. Several are most common on Windows builds and are flagged as such.
 
 ## "Why is my output broken?" — debugging order
 
@@ -17,7 +17,7 @@ When something looks wrong:
 **Cause:** A broken fontconfig setup, common in Windows ffmpeg builds. Even with `--enable-fontconfig --enable-libfreetype` compiled in, the runtime can't find any fonts and `drawtext` silently no-ops instead of failing loudly.
 
 **Fix:** On an affected build, don't use drawtext for text overlays. Alternatives:
-- For subtitles → use `subtitles=` filter with an SRT file, or `ass=` with an ASS file (libass works fine here).
+- For subtitles → use `subtitles=` filter with an SRT file, or `ass=` with an ASS file. libass is unaffected by the fontconfig problem, so these keep working.
 - For burned-in static text → render the text once in another tool (Photoshop, Inkscape, or even an HTML→PNG snapshot) and overlay the PNG with the `overlay` filter.
 - For timestamps on contact sheets → infer time from grid position rather than overlaying. With `fps=1/N tile=ColxRow`, cell `(r, c)` is at `(r × Col + c) × N` seconds.
 
@@ -228,11 +228,11 @@ When in doubt, use `.mkv` as an intermediate.
 
 ## "Unknown encoder 'libfdk_aac'"
 
-This build has `--disable-libfdk-aac` (FDK AAC has a non-redistributable license). Use the built-in `aac` encoder instead:
+Almost every redistributable build ships `--disable-libfdk-aac`, because FDK AAC's license is not GPL-compatible. Use the built-in `aac` encoder instead:
 ```bash
 -c:a aac -b:a 192k
 ```
-Quality is comparable for 128 kbps+ targets. For very low bitrates (< 64 kbps), libfdk's HE-AAC was meaningfully better, but you can't use it here without a custom build.
+Quality is comparable for 128 kbps+ targets. For very low bitrates (< 64 kbps), libfdk's HE-AAC is meaningfully better, but getting it requires compiling ffmpeg yourself.
 
 ## EBU R128 loudnorm pass 2 doesn't produce target loudness
 

@@ -162,9 +162,9 @@ Critical rules for filter_complex concat:
 
 For full encoder details (parameters, presets, profiles), see `reference.md`.
 
-## Common pitfalls (Windows + this build specifically)
+## Common pitfalls
 
-1. **`drawtext` silently fails on this Windows ffmpeg build.** Fontconfig errors out and produces output without text. Don't use `drawtext` for timestamp overlays — use `subtitles=` with an SRT/ASS file instead, or tile-position math.
+1. **`drawtext` can silently produce no text.** Common on Windows builds: fontconfig finds no fonts and the filter no-ops instead of erroring. Test it before relying on it; if affected, use `subtitles=` with an SRT/ASS file instead, or tile-position math. See `troubleshooting.md`.
 2. **`yuv420p` requires even dimensions.** When scaling from sources with odd dimensions (gifs especially), use `scale=trunc(iw/2)*2:trunc(ih/2)*2` or `scale=W:-2` (the `-2` rounds height to even).
 3. **Concat demuxer is strict.** "Same codec" really means same codec parameters. If you mix recordings with different fps/resolution/profile, the demuxer will silently produce a broken file. Probe both first.
 4. **`-c copy` cuts are not frame-accurate.** They snap to the nearest preceding keyframe. If you need an exact cut, re-encode.

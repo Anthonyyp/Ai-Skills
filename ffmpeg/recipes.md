@@ -35,7 +35,7 @@ ffmpeg -hide_banner -loglevel error -y -i in.mp4 \
   -vf "fps=1/4,scale=384:-2,tile=8x10" \
   -frames:v 1 analysis/contact_sheet.jpg
 ```
-Tune `fps=1/N` so total frames ≈ rows × cols. For a 5-min source: `fps=1/4` × `tile=8x10` (=80 frames). Cell `(row, col)` is at time `(row × cols + col) × interval` seconds. Don't try to overlay timestamps with `drawtext` on this Windows build — it silently fails.
+Tune `fps=1/N` so total frames ≈ rows × cols. For a 5-min source: `fps=1/4` × `tile=8x10` (=80 frames). Cell `(row, col)` is at time `(row × cols + col) × interval` seconds. Prefer that position math over a `drawtext` timestamp overlay — `drawtext` silently renders nothing on builds whose fontconfig can't find fonts, which is common on Windows.
 
 ### Zoom-in tile sheet for a specific section
 ```bash
