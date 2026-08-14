@@ -25,8 +25,10 @@ Keep the "what it does" cell to one line.
 ## Install
 
 Skills must sit **exactly one level** under a `skills/` directory —
-`skills/<skill-name>/SKILL.md`. Anything nested deeper is silently ignored, so
-copy the skill folder itself, not a category folder.
+`skills/<skill-name>/SKILL.md`. Anything nested deeper is silently ignored.
+That's why this repo is flat, and why the category headings in the index above
+are labels rather than directories: copy a skill folder straight across, and
+don't group them into subfolders on the way in.
 
 ```bash
 # personal — available in every project
