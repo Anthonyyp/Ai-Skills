@@ -15,6 +15,7 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 | Skill | What it does |
 |---|---|
 | [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. |
+| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. |
 
 <!--
 Add new skills as a row above, under the right category heading.
