@@ -6,21 +6,27 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 
 ### Image
 
-| Skill | What it does |
-|---|---|
-| [gimp-image-editor](gimp-image-editor/) | GIMP control via Script-Fu / Python batch CLI — layered compositing, XCF/PSD, text layers, GEGL filters, chroma key, batch export, layer-preserving PDF/EPS. |
+| Skill | What it does | Requires |
+|---|---|---|
+| [gimp-image-editor](gimp-image-editor/) | GIMP control via Script-Fu / Python batch CLI — layered compositing, XCF/PSD, text layers, GEGL filters, chroma key, batch export, layer-preserving PDF/EPS. | GIMP 2.10+ (3.x preferred) · Python 3.8+ |
 
 ### Audio & Video
 
-| Skill | What it does |
-|---|---|
-| [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. |
-| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. |
+| Skill | What it does | Requires |
+|---|---|---|
+| [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. | `ffmpeg` + `ffprobe` on PATH |
+| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. | Python 3.7+ · `pip install edge-tts` · internet |
+
+Each skill's own README has the full requirements; the column lists what you must install before
+the skill is usable at all. Skills are self-contained — none depends on another.
 
 <!--
 Add new skills as a row above, under the right category heading.
 Add a new "### Category" section when nothing fits.
 Keep the "what it does" cell to one line.
+"Requires" = external software the user must install first (binaries, packages, runtimes,
+an account/API key). Optional extras don't belong here — put those in the skill's own README.
+Write "none" if the skill is pure prompt guidance with no dependencies.
 -->
 
 ## Install
