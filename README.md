@@ -16,6 +16,7 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 |---|---|---|
 | [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. | `ffmpeg` + `ffprobe` on PATH |
 | [local-transcription](local-transcription/) | Offline speech-to-text via faster-whisper (Whisper models) — timestamped transcripts, SRT, word-level timings for editing, single-window transcription, coverage checks. | Python 3.8+ · `pip install faster-whisper` · `ffmpeg` on PATH |
+| [longform-video-edit](longform-video-edit/) | Cut a long recording down for sharing — survey via timestamped contact sheets, dead-air trimming, blur private on-screen data, mute words, render, verify, size for delivery. | Python 3.8+ · `pip install pillow` · `ffmpeg` on PATH |
 | [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. | Python 3.7+ · `pip install edge-tts` |
 
 Each skill's own README has the full requirements; the column lists what you must install before
