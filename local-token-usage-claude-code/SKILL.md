@@ -1,11 +1,11 @@
 ---
-name: claude-code-token-usage
+name: local-token-usage-claude-code
 description: >
   Analyze Claude Code token usage and estimate API costs for a given time period.
   Parses local session JSONL files, breaks down usage per session with per-model
   pricing fetched live from Anthropic's pricing docs. Use this skill when the user
   asks about their token usage, API spend, how much they've used Claude, cost
-  breakdown by model, or invokes /claude-code-token-usage.
+  breakdown by model, or invokes /local-token-usage-claude-code.
 ---
 
 # Token Usage Analyzer
