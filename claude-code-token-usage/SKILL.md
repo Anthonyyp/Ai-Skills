@@ -1,11 +1,11 @@
 ---
-name: token-usage
+name: claude-code-token-usage
 description: >
   Analyze Claude Code token usage and estimate API costs for a given time period.
   Parses local session JSONL files, breaks down usage per session with per-model
   pricing fetched live from Anthropic's pricing docs. Use this skill when the user
   asks about their token usage, API spend, how much they've used Claude, cost
-  breakdown by model, or invokes /token-usage.
+  breakdown by model, or invokes /claude-code-token-usage.
 ---
 
 # Token Usage Analyzer
@@ -15,10 +15,10 @@ Parse Claude Code session logs to report token consumption and estimated API cos
 broken down by session and by model. Costs are calculated **per turn per model**
 using **live pricing fetched from Anthropic's docs** — never hardcoded values.
 
-**Reads `~/.claude/projects/**/*.jsonl`** — the logs Claude Code writes locally. That data source is
-the one Claude-Code-specific thing here; *any* agent can run this skill, but it only has anything to
-report if Claude Code has run on the machine. Everything else — the script, the paths, the
-invocation — is OS- and tool-agnostic.
+**This is a Claude Code skill.** It reads the session logs Claude Code writes to
+`~/.claude/projects/**/*.jsonl`; with no Claude Code history on the machine there is nothing to
+report. It is, however, fully **OS-agnostic** — Windows, macOS and Linux all work, and nothing below
+assumes a particular shell.
 
 ⚠ **Costs are estimates** derived from logged token counts. Good for a directional read and for
 comparing sessions; the provider's own billing is the authority.

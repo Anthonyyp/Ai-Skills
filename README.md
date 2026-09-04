@@ -23,7 +23,7 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 
 | Skill | What it does | Requires |
 |---|---|---|
-| [token-usage](token-usage/) | Report what your Claude Code sessions actually cost — parses local session logs, breaks usage down per session and per model, prices each turn at the rate of the model that generated it, using pricing fetched live from Anthropic's docs rather than hardcoded. Optional printable HTML report. | Python 3.7+ |
+| [claude-code-token-usage](claude-code-token-usage/) | Report what your Claude Code sessions actually cost — parses the local session logs, breaks usage down per session and per model, prices each turn at the rate of the model that generated it, using pricing fetched live from Anthropic's docs rather than hardcoded. Optional printable HTML report. | Python 3.7+ · Claude Code session logs |
 
 Each skill's own README has the full requirements; the column lists what you must install before
 the skill is usable at all. Skills are self-contained — none depends on another.
