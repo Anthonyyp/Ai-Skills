@@ -19,6 +19,12 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 | [longform-video-edit](longform-video-edit/) | Cut a long recording down for sharing — survey via timestamped contact sheets, dead-air trimming, blur private on-screen data, mute words, render, verify, size for delivery. | Python 3.8+ · `pip install pillow` · `ffmpeg` on PATH |
 | [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. | Python 3.7+ · `pip install edge-tts` |
 
+### Claude Code
+
+| Skill | What it does | Requires |
+|---|---|---|
+| [token-usage](token-usage/) | Report what your Claude Code sessions actually cost — parses local session logs, breaks usage down per session and per model, prices each turn at the rate of the model that generated it, using pricing fetched live from Anthropic's docs rather than hardcoded. Optional printable HTML report. | Python 3.7+ |
+
 Each skill's own README has the full requirements; the column lists what you must install before
 the skill is usable at all. Skills are self-contained — none depends on another.
 
