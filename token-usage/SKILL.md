@@ -15,6 +15,14 @@ Parse Claude Code session logs to report token consumption and estimated API cos
 broken down by session and by model. Costs are calculated **per turn per model**
 using **live pricing fetched from Anthropic's docs** — never hardcoded values.
 
+**Reads `~/.claude/projects/**/*.jsonl`** — the logs Claude Code writes locally. That data source is
+the one Claude-Code-specific thing here; *any* agent can run this skill, but it only has anything to
+report if Claude Code has run on the machine. Everything else — the script, the paths, the
+invocation — is OS- and tool-agnostic.
+
+⚠ **Costs are estimates** derived from logged token counts. Good for a directional read and for
+comparing sessions; the provider's own billing is the authority.
+
 ---
 
 ## Step 1 — Ask These Three Questions
@@ -85,28 +93,35 @@ so dated variants like `claude-sonnet-4-6-20250929` automatically hit the right 
 
 ## Step 4 — Run the Analysis Script
 
-Write the pricing config to `~/.claude/token_usage_config.json` using the Write tool.
-Fill in `prices` and `pricing_source` from Steps 2–3:
+Write the pricing you fetched to a JSON file — **anywhere you like**, since you pass the path in.
+Use whatever file-writing tool your environment gives you.
+
+Set `pricing_source` to say where the rates actually came from. **It is printed on the report**, so
+make it honest: `"live from Anthropic docs, <date>"`, or `"FALLBACK - fetch failed"` if Step 2 didn't
+work. The script separately flags any model that fell back to `default_prices`.
 
 ```json
 {
+  "pricing_source": "live from Anthropic docs, <date>",
   "prices": {
-    "claude-opus-4-7": {"input": 5.00, "output": 25.00, "cache_write": 6.25, "cache_read": 0.50}
+    "<model-id>": {"input": 0.00, "output": 0.00, "cache_write": 0.00, "cache_read": 0.00}
   },
   "default_prices": {"input": 3.00, "output": 15.00, "cache_write": 3.75, "cache_read": 0.30}
 }
 ```
 
-Then run the bundled script (add `--html` if the user requested HTML output):
+Then run the bundled script, adding `--html` if the user asked for the HTML report:
 
-```bash
-python3 ~/.claude/skills/token-usage/scripts/token_usage.py \
-  --hours HOURS --scope SCOPE --config ~/.claude/token_usage_config.json [--html] \
-  || python ~/.claude/skills/token-usage/scripts/token_usage.py \
-  --hours HOURS --scope SCOPE --config ~/.claude/token_usage_config.json [--html]
+```
+<python> <skill-dir>/scripts/token_usage.py --hours HOURS --scope SCOPE --config <config-path> [--html]
 ```
 
-The script prints results to stdout. If `--html` was used, it also prints `HTML written to: <path>` — open that file in any browser.
+- **`<python>`** — `python3` on macOS/Linux, usually `python` on Windows. **Don't chain them with
+  `||`**: that's shell-specific and is a parse error in PowerShell, which is the default shell on the
+  one platform where `python3` typically *doesn't* exist. Use whichever works.
+- **Quote any path containing spaces** — skill directories often live under a user profile path that has them.
+
+The script prints results to stdout. With `--html` it also prints `HTML written to: <path>`.
 
 ---
 
