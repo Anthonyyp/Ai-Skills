@@ -1,0 +1,48 @@
+{
+  "_comment": "Everything in source seconds. Cuts are structural (from the segment map). Stretches are the silent-but-moving spans scan_signals.py found (ids from signals.json); anything not listed is kept as recorded. Dead air is derived, not listed. Disclosures come from the visual pass and are only checked - every one must fall inside a cut or a blur window with that region, or QA fails.",
+
+  "source": "webinar.mp4",
+  "signals": "signals.json",
+  "words": "webinar.words.tsv",
+
+  "cuts": [
+    [0, 723.26, "pre-session banter and slideshow setup"],
+    [1584, 1623, "fumbling into the live demo"],
+    [3525, 3581, "repeats the 56:31 point"],
+    [5988, 6089.77, "housekeeping after the wrap-up"]
+  ],
+
+  "stretches": [
+    {"id": "S025", "action": "cap", "seconds": 4, "why": "tab flick, then waiting on a response"},
+    {"id": "S031", "action": "keep", "why": "report streams in and the speaker refers to it"},
+    {"id": "S009", "action": "cut", "why": "spinner only"},
+    {"range": [5217.9, 5226.4], "action": "cap", "seconds": 5, "why": "scroll to the bottom of the ledger"}
+  ],
+
+  "min_silence": 3.0,
+  "leave_silence": 0.5,
+  "max_speed": 8,
+  "snap_window": 0.75,
+
+  "regions": {
+    "rail":        [0.004, 0.085, 0.192, 0.99],
+    "chat_body":   [0.184, 0.20,  0.997, 0.805],
+    "url_bar":     [0.475, 0.045, 0.7125, 0.09]
+  },
+
+  "blur": [
+    {"start": 4302, "end": 4356, "regions": ["rail"]},
+    {"start": 4356, "end": 4421, "regions": ["rail", "chat_body"]},
+    {"start": 4460, "end": 4475, "regions": ["url_bar"]}
+  ],
+
+  "disclosures": [
+    {"start": 4305, "end": 4420, "what": "client channel names in the left rail", "region": "rail"},
+    {"start": 4360, "end": 4419, "what": "a client report in the message body", "region": "chat_body"},
+    {"start": 250, "end": 262, "what": "a customer's email open full screen"}
+  ],
+
+  "_mute": "SOURCE seconds, word start -> word end from the words file. Every word matching flag_words (default: a profanity list) must be cut, muted, or in allow, or the build dies.",
+  "mute": [[3975.76, 3976.28], [3984.30, 3984.82]],
+  "allow": ["dicking", 258.56]
+}
