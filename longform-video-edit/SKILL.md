@@ -92,11 +92,21 @@ on screen is editing, and editing is not a question.
 **Redactions.** Each disclosure from the visual pass is either inside a cut or gets a blur window.
 Regions are **fractions of the frame** named in `regions`; blur the *field* (the whole rail, the
 whole message pane), not the words — pages scroll and a box sized to today's text misses tomorrow's.
-Keep what carries meaning: the app's layout, the shape of a report. Where a region comes and goes
-across the runtime, score frames at 2 s intervals on a cheap pixel signature (mean B−R in a rail,
-variance of a nav column) calibrated on frames you've already identified — that catches the 2-second
-flashes spot-checking never will. **List every disclosure in the plan** — `build_edit.py` refuses to
-build if one is neither cut nor blurred.
+Keep what carries meaning: the app's layout, the shape of a report.
+
+A region that comes and goes across the runtime — the client's channel list every time the
+presenter tabs to the chat app — is the case spot-checking loses: a 30 s contact sheet misses the
+two-second flashes. Scan for it instead, with the times you've already identified as examples:
+```bash
+python scripts/find_regions.py in.mp4 --region 0.004,0.085,0.192,0.99     --positive 4310,4480,4742 --negative 100,777,2600,4400 --out rail-windows.json
+```
+It scores the region every 2 s against the examples and prints the matching windows with a
+margin; anything flagged close, look at with `contact_sheet.py --times`. If a wrong kind of
+screen shows up in the hits (a dark title slide reads like a dark sidebar), add one of those
+times as a negative and run again — one pass on a 100-minute file is about three minutes. On the
+recording this was built on it reproduced the hand-built blur list to the second.
+**List every disclosure in the plan** — `build_edit.py` refuses to build if one is neither cut
+nor blurred.
 
 Write the plan — `templates/plan.example.json` is the shape — and dry-run it:
 ```bash

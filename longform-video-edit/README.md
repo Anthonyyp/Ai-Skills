@@ -36,6 +36,7 @@ frames it changes, so the encoder is not where the time hides.
 | `SKILL.md` | The workflow — intake, extract, decide, ask once, render, QA until clean, deliver |
 | `scripts/scan_signals.py` | Silence + motion-inside-silence → `signals.json`; the measured content map |
 | `scripts/contact_sheet.py` | Frames → timestamped contact sheets, for reading the video and for verifying |
+| `scripts/find_regions.py` | Every moment a screen region shows a given kind of content, from a few example times → blur windows |
 | `scripts/build_edit.py` | Plan + signals → trim/concat filter graph, render, mute pass, `manifest.json` |
 | `scripts/qa_check.py` | Rendered file + manifest → PASS/FAIL report and a QC cheat-sheet skeleton |
 | `scripts/deliver.py` | QA-passed master → Share and Phone encodes, each verified |
