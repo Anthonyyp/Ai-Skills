@@ -195,7 +195,14 @@ def check_blur(rep, out, src, man, pv):
             if ss < 1.0:
                 rep.add(None, "blur", f"{name} @ out {hms(c['out'])}: source region is flat ({ss:.2f}), cannot judge"); continue
             ratio = so / ss
-            rep.add(ratio < 0.25, "blur", f"{name} @ out {hms(c['out'])} (src {hms(c['src'])}): detail {ratio:.2f} of source")
+            # two ways to pass: the blur removed three quarters of the detail, or what is left
+            # is below the level at which anything is legible at all (measured: a blurred UI
+            # region sits at 0.3-0.7 whatever it covered; readable text is 3-9). The floor is
+            # for a source region that is nearly flat itself - a dark pane with one small
+            # dialog - where the ratio is noise over noise.
+            ok = ratio < 0.25 or so < 1.0
+            rep.add(ok, "blur", f"{name} @ out {hms(c['out'])} (src {hms(c['src'])}): detail {ratio:.2f} of source"
+                    + (f", {so:.2f} absolute (flat)" if ok and ratio >= 0.25 else ""))
     # negative control: just outside each window the region must be sharp. The source region
     # has to hold still around the sample point, or a placeholder appearing between the two
     # frames reads as blur; try a few offsets and judge the first stable one.

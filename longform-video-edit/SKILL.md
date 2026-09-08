@@ -155,7 +155,7 @@ Every check is something a person would otherwise scrub for:
 |---|---|
 | container | duration = planned ±1 s · no chapter track · frame size and fps match source · A/V stream lengths agree |
 | mute | peak < −70 dB strictly inside each window · audio back within a second after (that the window is on the *right word* is `build_edit.py`'s check, at plan time) |
-| blur | in-region detail < 25 % of the source frame's at three points per window · **and** > 60 % just outside the window, at the first offset where the source region holds still (blur landed, on the right pane, at the right time) |
+| blur | in-region detail < 25 % of the source frame's (or below the absolute level where anything is legible, for a source region that is nearly flat itself) at three points per window · **and** > 60 % just outside the window, at the first offset where the source region holds still (blur landed, on the right pane, at the right time) |
 | motion | every kept or ramped stretch still shows motion in the output |
 | privacy | every listed disclosure sits inside a cut or a matching blur window |
 | join | whisper on the source ±4 s: neither edge splits a word · output waveform up to 2 s either side (clipped to the piece) correlates > 0.6 with the source it should be, lag refined to the sample |
