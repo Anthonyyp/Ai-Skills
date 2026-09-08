@@ -68,6 +68,18 @@ Once you have text, grep it. Cheap, and it catches things watching never would:
   blurring video does nothing for audio
 - **Topic location** — find where something is discussed instead of scrubbing a timeline
 
+## When it's a meeting
+
+Produce two files alongside the raw transcript, and nothing that wasn't said:
+
+1. **`transcript.md`** — readable: participants, speaker attribution where it can be inferred from
+   context (say that it was inferred), punctuation fixed, timestamps at paragraph level. Never
+   invent content for an inaudible span — mark it `[inaudible mm:ss]`.
+2. **`action_items.md`** — owner · action · when. Only items actually stated.
+
+Proper nouns get fumbled. Correct the ones you know from context; leave uncertain ones as heard,
+marked `(sp?)`.
+
 ## When a cloud video model is the better tool
 
 | Need | Use |
@@ -93,3 +105,5 @@ transcript is a useful control to check them against.
 - **Output is UTF-8 with the platform's line endings.** On Windows, strip `\r` before feeding
   filenames or timestamps into a shell loop.
 - A `huggingface_hub` symlink warning on Windows is harmless noise.
+- **Long recordings: run in the background and report when done.** Nobody should sit through a
+  two-hour transcription; give the ETA and come back with the file.
