@@ -80,8 +80,14 @@ vs. you need all thirty" inference:
 - `keep` — the action is the content; leave it at real speed (anything under ~4 s is a keep).
 - `cap N` — speed-ramp to N seconds; every frame still passes, faster. Usually 3–6 s.
 - `cut` — spinner, idle cursor, notification; treat as still and trim like dead air.
-Unlisted stretches are kept. When unsure, keep — a kept stretch costs seconds, a cut one costs
-content. Stretches inside a structural cut are swallowed by it; you don't need to list them.
+Most stretches are 1–3 s blips, and for those the call is **transition or action**: a slide wipe,
+tab switch or popup closing leaves a different still screen behind — cut it, the jump reads
+better; typing, a click that creates something, a response appearing — keep. Decide every one:
+unlisted stretches are kept at real speed, and a recording has dozens of transitions. When unsure,
+keep — a kept stretch costs seconds, a cut one costs content. Stretches inside a structural cut
+are swallowed by it; you don't need to list them. These are the agent's calls, not the owner's —
+the owner decides *what* goes (tangents, chit-chat, private material); how long anything stays
+on screen is editing, and editing is not a question.
 
 **Redactions.** Each disclosure from the visual pass is either inside a cut or gets a blur window.
 Regions are **fractions of the frame** named in `regions`; blur the *field* (the whole rail, the
