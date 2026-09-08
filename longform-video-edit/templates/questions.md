@@ -1,18 +1,28 @@
 # Questions before I render — {title}
 
 Source {source_duration}. The plan below lands at about **{planned_duration}** ({minutes_removed}
-min out). Everything I'm confident about is already decided; these are the calls that are yours.
-Answer inline — a number, a word, "all yes" — and I'll render, run QA until it passes, and send the
-file with a QC sheet.
+min out). This is what I intend to do, with my default on every line — read it and override what
+you disagree with. Answer inline — a number, a word, "all yes" — and I'll render, run QA until it
+passes, and send the file with a QC sheet. (The editing itself — dead air, how long each on-screen
+moment runs, where the cut edges land — isn't on this list; that's mine.)
 
-## 1. Borderline cuts
-Segments scored 3/5 — real content, but the recording says it twice or wanders. Default is what's
-in **bold**.
+## 1. What I'm cutting
+Everything I intend to remove, so nothing goes without you seeing it. Default is what's in
+**bold**; the first group is the confident calls, the second is where it could go either way.
+
+Confident — say the number to keep any of these:
 
 | # | Source range | What it is | Saves | Cut / keep |
 |---|---|---|---|---|
-| 1 | {h:mm:ss}–{h:mm:ss} | {one line, e.g. "AI validation rabbit holes — repeats the 56:31 point"} | {m:ss} | **cut** |
-| 2 | … | … | … | **keep** |
+| 1 | {h:mm:ss}–{h:mm:ss} | {e.g. "pre-show: mic checks, waiting for people to join"} | {m:ss} | **cut** |
+| 2 | … | {e.g. "participant banter about the weekend"} | … | **cut** |
+
+Borderline — real content, but the recording says it twice or wanders:
+
+| # | Source range | What it is | Saves | Cut / keep |
+|---|---|---|---|---|
+| 3 | {h:mm:ss}–{h:mm:ss} | {e.g. "AI validation rabbit holes — repeats the 56:31 point"} | {m:ss} | **cut** |
+| 4 | … | … | … | **keep** |
 
 ## 2. Things on screen that shouldn't circulate
 Each one is either blurred (you can see what's happening, not who it's about) or cut. Default in

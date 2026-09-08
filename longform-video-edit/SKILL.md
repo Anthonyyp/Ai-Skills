@@ -70,9 +70,11 @@ any hit is neither cut, muted nor listed in `allow`. Each mute is `[word start, 
 
 ## 3. Decide
 
-**Structural cuts** come from the segment map: importance 1–2 goes; importance 3 is a question for
-the owner (step 4); 4–5 stays. Check every cut against the visual pass — a segment can be scored
-low for its speech while a demo runs underneath it. Write cuts as `[start, end, why]`.
+**Structural cuts** come from the segment map: importance 1–2 is proposed as a cut, importance 3
+is proposed either way with a stated lean, 4–5 stays. *Every* proposed cut goes on the question
+sheet (step 4) — what is and isn't worth keeping is the owner's call, so the owner sees the whole
+list, not just the borderline ones. Check every cut against the visual pass — a segment can be
+scored low for its speech while a demo runs underneath it. Write cuts as `[start, end, why]`.
 
 **Stretches** — run `prompts/stretch-decisions.md` over the list in `signals.json`, with the 1 fps
 sheet, the transcript ±20 s and the segment-map entry for each. This is the "five seconds is enough
@@ -118,10 +120,15 @@ and prints what it spared, ramped and demoted plus the output length.
 
 ## 4. Ask — once
 
-Fill `templates/questions.md` and send it. The questions that are the owner's, not yours:
-borderline cuts (importance 3), each disclosure (blur or cut the moment), each flagged word, target
-length if the brief had none, and anything the two readings disagreed on. Give your default for each
-so "all yes" is a valid answer. Then **no more questions until the file is done.**
+Fill `templates/questions.md` and send it. This is a **proposal to confirm, not a questionnaire**:
+you have already found everything and decided a default for each; the owner reads the list and
+overrides what they disagree with. What goes on it — the calls that are the owner's, not yours:
+every proposed cut (tangents, repeats, chit-chat, the pre-show — with the confident ones grouped
+and the borderline ones called out), each disclosure found on screen (blur or cut the moment), each
+flagged word, target length if the brief had none, and anything the two readings disagreed on.
+Give your default for each so "all yes" is a valid answer. What does *not* go on it: dead-air
+trims, stretch decisions, cut-edge placement, blur mechanics — that is editing, and editing is
+never a question. Then **no more questions until the file is done.**
 
 ## 5. Render
 
