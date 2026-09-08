@@ -38,6 +38,7 @@ frames it changes, so the encoder is not where the time hides.
 | `scripts/contact_sheet.py` | Frames → timestamped contact sheets, for reading the video and for verifying |
 | `scripts/build_edit.py` | Plan + signals → trim/concat filter graph, render, mute pass, `manifest.json` |
 | `scripts/qa_check.py` | Rendered file + manifest → PASS/FAIL report and a QC cheat-sheet skeleton |
+| `scripts/deliver.py` | QA-passed master → Share and Phone encodes, each verified |
 | `prompts/segment-map.md` | Reading 1: segments, importance vs. the objective, cut taxonomy |
 | `prompts/visual-pass.md` | Reading 2: demos, moments the picture carries, disclosures with where-on-screen |
 | `prompts/stretch-decisions.md` | The inference: how long each silent-but-moving stretch needs |
@@ -61,6 +62,9 @@ python scripts/build_edit.py plan.json --render EDIT.mp4
 
 # prove it, until it passes
 python scripts/qa_check.py EDIT.mp4 --manifest manifest.json --sheet QC-CHEAT-SHEET.md
+
+# then the small versions
+python scripts/deliver.py EDIT.mp4
 ```
 
 ## How it decides

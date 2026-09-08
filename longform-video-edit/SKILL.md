@@ -159,15 +159,18 @@ blur exists somewhere. The classic miss is a blurred sidebar with the private co
 ## 7. Deliver
 
 Three files plus two documents:
+```bash
+python scripts/deliver.py EDIT.mp4      # -> EDIT-share.mp4, EDIT-phone.mp4, each verified
+```
 
 | Purpose | Settings | ~80 min 2560×1600 |
 |---|---|---|
-| Master | source resolution | ~200 MB |
-| Share | 1280×800, 15 fps, 32k mono | ~38 MB |
-| Phone | 1152×720, 10 fps, 24k mono | ~27 MB |
+| Master | source resolution, as rendered | ~200 MB |
+| Share | 1280×800, 15 fps, 32k mono | ~40–55 MB |
+| Phone | 1152×720, 10 fps, 24k mono | ~30–40 MB |
 
 Audio is often half the file: 32 kbps mono is plenty for speech. Don't go below 1280×800 if UI text
-matters. Attachment limits are 10–25 MB; deliver a link.
+matters (`--width` overrides). Attachment limits are 10–25 MB; deliver a link.
 
 - `CUT-LIST.md` (`templates/`) — what came out, what was protected, the one section worth arguing about.
 - `QC-CHEAT-SHEET.md` — `qa_check.py --sheet` writes the skeleton in output time; add the "expect to
