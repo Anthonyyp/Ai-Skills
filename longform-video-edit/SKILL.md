@@ -208,3 +208,35 @@ matters (`--width` overrides). Attachment limits are 10–25 MB; deliver a link.
   stays in — and QA passes, because it measures the windows it was given. `build_edit.py` now
   prints the words under each mute and dies on an uncovered flagged word; read that report.
 - Delete frame grids and excerpts when done; they run to gigabytes.
+
+## Roadmap — filler-word removal ("uh"/"um"), not shipped yet
+
+**Goal:** cut "uh"/"um" and dead hesitation as well as Descript does — that's the bar, not "better
+than nothing." Investigated 2026-09-09 on a real recording; not in `build_edit.py` yet because the
+honest result was real words getting clipped, and shipping that would be worse than not having the
+feature. Findings, so the next attempt doesn't re-learn these the hard way:
+
+- **Whisper doesn't transcribe fillers.** `large-v3` decodes straight through "uh"/"um" — they
+  don't appear as words, gap or no gap, `--words` or not. A `initial_prompt` seeded with example
+  filler-laden sentences (`"Um, so, uh, this is like, uh, a really, um, informal..."`) makes it
+  transcribe them with real timestamps — but the same bias causes outright hallucination on a long
+  run (14 of 42 hits on one test were the identical phantom phrase repeated at different
+  timestamps, all zero-duration — a classic decoder repetition loop). Filter to `end - start > 0.1s`
+  before trusting a hit; that alone cleared every hallucination in testing.
+- **The harder failure mode: a hesitation with *no gap on either side* is invisible to any
+  gap-based method.** Whisper often absorbs the whole thing into one adjacent word's reported
+  span — a 1.46 s drawn-out "uhhhh" was found sitting entirely inside the timestamp Whisper gave
+  the word "stuff" (reported as 3.08 s long; a real word doesn't take 3 seconds). Caught by
+  flagging words whose duration is implausible for their length (`duration > 2.2x` a
+  characters-based estimate), then re-probing that word's own audio locally with `silencedetect`
+  at a stricter threshold (~`-35dB`) to find the real sound/silence islands inside it.
+- **That detector is also what clipped real words.** A word spoken a little slowly, or one with a
+  natural internal consonant stop, produces the same acoustic signature as "word + hidden filler" —
+  duration and energy alone can't tell them apart. Automating a cut on that signal is a coin flip
+  on real speech, confirmed by testing it against actual output audio.
+- **Conclusion:** this is the one place in the skill that would need a human actually listening
+  before a cut commits, unlike everything else here (which decides on its own and never asks
+  *how*). Either build a review step — proposed cuts with enough context to approve/reject by ear
+  or by reading the surrounding words — or find a model that flags hesitation with real confidence,
+  not a duration heuristic. Don't re-ship the aggressive auto-cut version; it reads as broken
+  speech, not tightened speech.
