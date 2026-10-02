@@ -1,15 +1,39 @@
 ---
 name: text-to-speech
-description: Turn written content into a natural-sounding spoken audio file (MP3) using edge-tts — free Microsoft neural voices, no API key, no quota. Covers writing a speakable transcript from source material (prose that sounds right read aloud, not markdown read literally), rendering it reliably, and picking a voice. Trigger on "read this aloud", "convert to audio", "make an audio version", "narrate this", "TTS this", "audio briefing", "text to speech", or any request to listen to a document instead of reading it.
+description: Turn written content into a natural-sounding spoken audio file (MP3) with Kokoro-82M, a small open voice model that runs entirely on your own machine — free, offline, Apache 2.0 so commercial use is fine, nothing uploaded. Covers writing a speakable transcript from source material (prose that sounds right read aloud, not markdown read literally), rendering it with natural pacing, and picking a voice. Trigger on "read this aloud", "convert to audio", "make an audio version", "narrate this", "TTS this", "audio briefing", "text to speech", or any request to listen to a document instead of reading it.
 ---
 
 # Text to Speech
 
-Convert written content into spoken audio using `edge-tts` (Microsoft Edge's online neural voices).
-Free, no API key, no quota, no account — it uses the same endpoint Edge's Read Aloud feature does.
-Quality is close to paid cloud TTS.
+Convert written content into spoken audio with [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M),
+an 82-million-parameter open voice model. It runs locally on CPU: no API key, no quota, no account,
+and nothing leaves the machine, so it's fine for confidential material.
 
-**Requires:** `pip install edge-tts` and an internet connection (rendering is a network call).
+**Requires:** a Python 3.10–3.12 environment with `kokoro` installed (setup below, about a minute),
+and `ffmpeg` on PATH for MP3 output. First render downloads the model (~313 MB) once.
+
+## Setup (once per machine)
+
+Kokoro's package caps at **Python 3.12**: it refuses 3.13+, and on those versions pip falls back to
+an old release that can't install. So give it its own environment. [uv](https://docs.astral.sh/uv/)
+fetches Python 3.12 if you don't have it:
+
+```bash
+uv venv --python 3.12 ~/.venvs/kokoro
+uv pip install --python ~/.venvs/kokoro torch --index-url https://download.pytorch.org/whl/cpu
+uv pip install --python ~/.venvs/kokoro kokoro soundfile "transformers>=4.45" pip
+```
+
+Why each piece is there:
+- **CPU torch first, from PyTorch's own index.** Without it you get the multi-gigabyte GPU build.
+- **`transformers>=4.45`.** Unpinned, the resolver backtracks to a 2021 release that needs a Rust
+  compiler and fails.
+- **`pip` inside the environment.** On first run Kokoro installs a small English language model
+  (spaCy `en_core_web_sm`, ~13 MB) and needs pip to do it.
+
+The environment comes to about 950 MB, mostly PyTorch. Run the renderer with **that environment's
+python**: `~/.venvs/kokoro/bin/python` on macOS/Linux, `~\.venvs\kokoro\Scripts\python.exe` on
+Windows. Run it with any other Python and it prints these instructions instead of failing obscurely.
 
 ## The two-step shape
 
@@ -31,8 +55,8 @@ Rewrite the source as spoken-word prose and save it as a separate `.md` or `.txt
 | URLs, file paths, code | Describe them; don't read them character by character |
 
 Also: keep sentences shorter than you would in writing, signpost transitions ("The interesting
-part is…"), and read it back in your head — anything that makes you stumble will make the
-synthesizer stumble.
+part is…"), and **put a blank line between ideas**. Paragraph breaks become pauses (next section),
+so they're your main pacing control.
 
 Keep the transcript as a deliverable in its own right. People often want to skim what they just
 heard.
@@ -40,82 +64,75 @@ heard.
 ### 2. Render
 
 ```bash
-python scripts/render_edge_tts.py --input transcript.md --output briefing.mp3
+~/.venvs/kokoro/bin/python scripts/render_kokoro.py --input transcript.md --output briefing.mp3
 ```
 
-Options: `--voice <name>` (default `en-US-AndrewNeural`).
+Options: `--voice` (default `am_eric`), `--speed` (default 1.0), `--gap` (seconds between
+paragraphs, default 0.65). `--output` ending in `.wav` skips the MP3 encode.
 
-**Do not replace this script with a one-shot `edge-tts --file ... --write-media ...` call.** On long
-texts, single-call rendering drops short audio slices at internal websocket chunk boundaries — the
-start of words gets clipped (a real example: "zero" came out as "euro") and dead silence appears
-mid-sentence. The failure is silent: the command exits 0 and the MP3 looks fine until you listen.
+**Use the script rather than a one-liner; pacing is the reason.** It renders one paragraph at a time
+and inserts a gap between them. Fed one long block, the voice runs ideas together and sounds
+recited. Within a paragraph Kokoro paces sentences well on its own. The script also sanitizes the
+text first:
 
-The script avoids it by rendering **one paragraph at a time** and concatenating the MP3 bytes, which
-keeps every individual render short enough that the bug never triggers. It also retries each
-paragraph up to three times, since the endpoint occasionally drops a connection mid-stream.
-
-It sanitizes the text first, which matters more than it sounds:
-
-- strips markdown headings, so they aren't read as "hash hash"
-- replaces em/en dashes and `·` with commas — dashes otherwise produce a long, unnatural pause
-- straightens curly quotes, which some voices articulate oddly
+- strips markdown heading markers, so they aren't read as "hash hash" (the heading text itself is
+  still spoken)
+- replaces em/en dashes and `·` with commas, which otherwise produce odd pauses
+- straightens curly quotes
 
 ## Voices
 
-Default is `en-US-AndrewNeural` — natural, conversational, holds up well over several minutes.
+Default is **`am_eric`**: clear, natural US male, holds up over several minutes.
 
-```bash
-edge-tts --list-voices                        # all of them (hundreds, many languages)
-edge-tts --list-voices | grep en-US           # US English
-```
+The name prefix gives language and gender: `a` = US English, `b` = British English; `f` = female,
+`m` = male.
 
-Other solid English options: `en-US-BrianNeural`, `en-US-EmmaNeural`, `en-US-GuyNeural`,
-`en-US-AriaNeural`, `en-GB-RyanNeural`, `en-GB-SoniaNeural`.
+| | Voices |
+|---|---|
+| US male | `am_adam` `am_echo` `am_eric` `am_fenrir` `am_liam` `am_michael` `am_onyx` `am_puck` `am_santa` |
+| US female | `af_alloy` `af_aoede` `af_bella` `af_heart` `af_jessica` `af_kore` `af_nicole` `af_nova` `af_river` `af_sarah` `af_sky` |
+| UK male | `bm_daniel` `bm_fable` `bm_george` `bm_lewis` |
+| UK female | `bf_alice` `bf_emma` `bf_isabella` `bf_lily` |
 
-Pick one and stay with it across a series — a voice change between episodes of the same thing is
+`af_heart` is the voice the model's authors rate highest. There are also Spanish (`e`), French
+(`f`), Hindi (`h`), Italian (`i`), Japanese (`j`), Brazilian Portuguese (`p`) and Mandarin (`z`)
+voices; the script picks the language from the first letter. The full list and the authors' quality
+grades are in `VOICES.md` on the [model page](https://huggingface.co/hexgrad/Kokoro-82M).
+
+Pick one and stay with it across a series. A voice change between episodes of the same thing is
 jarring.
 
 ## Checking the result
 
 ```bash
-ffprobe -v error -show_entries format=duration,bit_rate -of default=noprint_wrappers=1 out.mp3
+ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1 out.mp3
 ```
 
-Roughly 150 words per minute, so ~1,000 words lands near 6–7 minutes. If the duration is wildly
-short, a paragraph render probably failed — check the per-paragraph progress the script prints.
+Roughly 150 words per minute, so ~1,000 words lands near 6–7 minutes. **Always listen to at least
+the first 20 seconds before delivering.** Mispronounced proper nouns and acronyms are the usual
+defects, and they're fixed in the transcript (spell it phonetically), not in the renderer.
 
-**Always listen to at least the first 20 seconds before delivering.** Mispronounced proper nouns and
-acronyms are the usual defects, and they're fixed in the transcript (spell it phonetically), not in
-the renderer.
+## Speed
 
-## ⚠️ This is an unofficial client — read before depending on it
+CPU only, no GPU needed. Measured at **2–3× realtime** on a 4-core laptop; a 2-core machine is
+roughly realtime. A 10-minute briefing renders in a few minutes. Measure once on your hardware
+before quoting a time for something long.
 
-`edge-tts` is **not a Microsoft product**. It's an independent package
-([github.com/rany2/edge-tts](https://github.com/rany2/edge-tts)) that speaks to the same cloud
-endpoint Microsoft Edge's "Read Aloud" uses. The *voices* are Microsoft's; the *client* is
-community-built and reverse-engineered. There is no published API, no terms of service covering
-this use, no SLA, and no support channel.
+## License and provenance
 
-**If it suddenly stops working** — renders failing, HTTP 403, connection errors, or empty audio —
-that is the expected failure mode, not a bug in your setup. In order:
+- **Apache 2.0, model and code.** Free for commercial use; keep the license notice if you
+  redistribute it. The authors: *"Kokoro has been deployed in numerous projects and commercial
+  APIs. We welcome the deployment of the model in real use cases."*
+- **Get it only from the official sources:** `hexgrad/Kokoro-82M` on Hugging Face (the script pins
+  this) and the `kokoro` package on PyPI. The model page warns that websites with "kokoro" in their
+  domain are not affiliated with it.
+- **Training data** was public-domain and openly licensed audio, plus some synthetic audio from
+  commercial TTS systems. That's a question about how the model was built, not about your use of it.
+- **espeak-ng**, which Kokoro can use as a pronunciation fallback, is GPL. Using it as an installed
+  tool is fine; it only matters if you bundle it into software you distribute.
 
-1. **Update the package first:** `pip install -U edge-tts`. When Microsoft changes something, the
-   maintainer usually ships a fix quickly, and an outdated client is the most common cause.
-2. Check [the issue tracker](https://github.com/rany2/edge-tts/issues) — if the endpoint changed,
-   someone will have reported it within hours.
-3. If it's genuinely broken, fall back to another engine (a local one such as Piper or Coqui, or a
-   paid API). **Don't build anything you can't afford to lose on this without a fallback path.**
+## Limits
 
-**Commercial use is a grey area.** The neural voices are Microsoft's licensed property and this
-route isn't a licensed way to reach them. Fine for personal projects, drafts, and internal
-listening. If you're shipping generated audio in a product or monetizing it, use a service whose
-terms actually cover you.
-
-## Other limits
-
-- **Online only.** Audio is synthesized remotely, so it doesn't work offline — and **anything
-  confidential shouldn't go through it.** Use a local engine for sensitive material.
-- **No voice cloning, no fine-grained SSML** through this path. If you need a specific licensed
-  voice or precise prosody control, this is the wrong tool.
-- **Rate limits are undocumented.** Very large batches may start failing; the per-paragraph retry
-  in the script absorbs occasional drops, not sustained throttling.
+- **No voice cloning** and no SSML. Pronunciation is fixed in the transcript.
+- **English is the strong suit.** The other languages work but are less polished.
+- **First run downloads** the model (~313 MB) and a ~13 MB language model, then caches both.

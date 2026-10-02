@@ -17,7 +17,7 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 | [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. | Yes | `ffmpeg` + `ffprobe` on PATH |
 | [local-transcription](local-transcription/) | Offline speech-to-text via faster-whisper (Whisper models) — timestamped transcripts, SRT, word-level timings for editing, single-window transcription, coverage checks. | Yes | Python 3.8+ · `pip install faster-whisper` · `ffmpeg` on PATH |
 | [longform-video-edit](longform-video-edit/) | Cut a long recording down for sharing, end to end — measure dead air and on-screen motion, read it from contact sheets, decide cuts and how long silent demo moments need, ask the owner once, blur private on-screen data, mute words, render, then machine-QA the file until it passes. | Yes | Python 3.8+ · `pip install pillow numpy faster-whisper` · `ffmpeg` on PATH |
-| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. | No | Python 3.7+ · `pip install edge-tts` |
+| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 with Kokoro-82M, a local open voice model (offline, Apache 2.0, commercial use OK) — speakable-transcript writing, paced per-paragraph rendering, 54 voices. | No | Python 3.10–3.12 env · `pip install kokoro soundfile` + CPU torch · `ffmpeg` on PATH |
 
 ### Claude Code
 

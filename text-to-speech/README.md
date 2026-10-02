@@ -1,55 +1,46 @@
 # Text to Speech
 
-Turn written content into a natural-sounding MP3 using `edge-tts` — the free Microsoft neural
-voices behind Edge's Read Aloud. No API key, no quota, no account.
-
-> **Heads up:** [`edge-tts`](https://github.com/rany2/edge-tts) is a community package, not a
-> Microsoft product, and it talks to an **undocumented endpoint**. Cross-platform (Linux/macOS/
-> Windows, Python ≥3.7) and free, but Microsoft can change it without notice. If renders start
-> failing, run `pip install -U edge-tts` first — that fixes it most of the time. Commercial use is
-> a grey area; see the Limits section in `SKILL.md`.
+Turn written content into a natural-sounding MP3 with
+[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M), an open voice model that runs entirely
+on your own machine. Free, offline, CPU-only, and **Apache 2.0, so commercial use is fine**.
 
 Covers the part that actually determines quality: rewriting the source into a **speakable
-transcript** before rendering, rather than feeding a document straight into a synthesizer.
+transcript** before rendering, and rendering it with natural pacing rather than feeding a document
+straight into a synthesizer.
 
 Install: see the [links in the repo README](../README.md#install).
 
 ## Requirements
 
-```bash
-pip install edge-tts
-```
-
-Internet connection required — rendering is a network call to Microsoft's endpoint. `ffprobe`
-(from ffmpeg) is optional, for checking output duration.
+- **Python 3.10–3.12** in its own environment. Kokoro's package refuses 3.13+.
+  [uv](https://docs.astral.sh/uv/) will fetch 3.12 for you.
+- **`kokoro`, `soundfile`, CPU PyTorch.** The exact three commands, and why each one is needed,
+  are in `SKILL.md` under "Setup". About 950 MB installed.
+- **`ffmpeg`** on PATH, for MP3 output. Not needed if you write `.wav`.
+- **Internet once**, for the first render's ~313 MB model download. Fully offline after that.
 
 ## Layout
 
 | File | Contents |
 |---|---|
-| `SKILL.md` | The workflow — writing a speakable transcript, rendering, voices, verification |
-| `scripts/render_edge_tts.py` | The renderer: per-paragraph, retrying, text-sanitizing |
+| `SKILL.md` | The workflow: setup, writing a speakable transcript, rendering, voices, licensing |
+| `scripts/render_kokoro.py` | The renderer: per-paragraph pacing, text sanitizing, MP3 output |
 
 ## Quick use
 
 ```bash
-python scripts/render_edge_tts.py --input transcript.md --output briefing.mp3
-python scripts/render_edge_tts.py --input transcript.md --output briefing.mp3 --voice en-GB-RyanNeural
-edge-tts --list-voices | grep en-US
+~/.venvs/kokoro/bin/python scripts/render_kokoro.py --input transcript.md --output briefing.mp3
+~/.venvs/kokoro/bin/python scripts/render_kokoro.py --input transcript.md --output briefing.mp3 --voice bm_george
 ```
 
-## Why a script instead of the `edge-tts` CLI
+Default voice is `am_eric`. 54 voices in total; the English ones are listed in `SKILL.md`.
 
-One-shot rendering of a long transcript is unreliable: short audio slices get dropped at internal
-websocket chunk boundaries, clipping the starts of words and inserting dead silence mid-sentence.
-It fails **silently** — exit code 0, plausible-looking MP3.
+## Why a script instead of calling Kokoro directly
 
-Rendering one paragraph at a time and concatenating the MP3 bytes keeps each render short enough
-that the bug never triggers. The script also retries paragraphs on connection drops and strips
-markdown/typography that TTS reads badly (headings, em dashes, curly quotes).
+Pacing. The script renders one paragraph at a time and puts a deliberate gap between paragraphs,
+which is what makes narration sound composed instead of recited. It also strips markdown heading
+markers, turns dashes into commas, and straightens curly quotes before rendering.
 
 ## Not for
 
-Offline or confidential material (audio is synthesized remotely), voice cloning, precise prosody
-control, or anything you're shipping commercially. For those, use a local engine (Piper, Coqui) or
-a licensed API.
+Voice cloning, SSML-level prosody control, or real-time streaming. It renders files.
