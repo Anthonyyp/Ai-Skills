@@ -25,6 +25,7 @@ Install: see the [links in the repo README](../README.md#install).
 |---|---|
 | `SKILL.md` | The workflow: setup, writing a speakable transcript, rendering, voices, licensing |
 | `scripts/render_kokoro.py` | The renderer: per-paragraph pacing, text sanitizing, MP3 output |
+| `samples/voice-samples.mp3` | 4-minute sampler of all 28 English voices, numbered to match the table in `SKILL.md` (1.25 MB) |
 
 ## Quick use
 
@@ -33,7 +34,9 @@ Install: see the [links in the repo README](../README.md#install).
 ~/.venvs/kokoro/bin/python scripts/render_kokoro.py --input transcript.md --output briefing.mp3 --voice bm_george
 ```
 
-Default voice is `am_eric`. 54 voices in total; the English ones are listed in `SKILL.md`.
+Default voice is `am_eric`. 54 voices in total; the 28 English ones are numbered in `SKILL.md`, and
+`samples/voice-samples.mp3` lets you hear them all before choosing. The skill asks which voice to
+use (offering the sampler) unless one is already chosen.
 
 ## Why a script instead of calling Kokoro directly
 

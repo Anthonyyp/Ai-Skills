@@ -84,17 +84,36 @@ text first:
 
 Default is **`am_eric`**: clear, natural US male, holds up over several minutes.
 
-The name prefix gives language and gender: `a` = US English, `b` = British English; `f` = female,
-`m` = male.
+### Ask before rendering, unless the voice is already settled
 
-| | Voices |
-|---|---|
-| US male | `am_adam` `am_echo` `am_eric` `am_fenrir` `am_liam` `am_michael` `am_onyx` `am_puck` `am_santa` |
-| US female | `af_alloy` `af_aoede` `af_bella` `af_heart` `af_jessica` `af_kore` `af_nicole` `af_nova` `af_river` `af_sarah` `af_sky` |
-| UK male | `bm_daniel` `bm_fable` `bm_george` `bm_lewis` |
-| UK female | `bf_alice` `bf_emma` `bf_isabella` `bf_lily` |
+If the user hasn't named a voice, and nothing they've set up (a wrapper skill, an earlier choice in
+the same series) already decides it, **ask once before rendering**:
 
-`af_heart` is the voice the model's authors rate highest. There are also Spanish (`e`), French
+> I'll use **Eric** (a natural US male voice) unless you'd like another. There are 28 English
+> voices. Want to hear a four-minute sampler first?
+
+If they want to hear it, give them **`samples/voice-samples.mp3`** (1.25 MB): every English voice
+says its number and name, then the same line, in the order of the table below. They answer with a
+number or a name, and you pass the matching code to `--voice`. If they just say go, use Eric.
+Don't re-ask within a series; the voice stays fixed once chosen.
+
+| # | Code | # | Code | # | Code | # | Code |
+|---|---|---|---|---|---|---|---|
+| **US female** | | | | | | | |
+| 1 | `af_alloy` | 4 | `af_heart` | 7 | `af_nicole` | 10 | `af_sarah` |
+| 2 | `af_aoede` | 5 | `af_jessica` | 8 | `af_nova` | 11 | `af_sky` |
+| 3 | `af_bella` | 6 | `af_kore` | 9 | `af_river` | | |
+| **US male** | | | | | | | |
+| 12 | `am_adam` | 14 | **`am_eric`** (default) | 16 | `am_liam` | 18 | `am_onyx` |
+| 13 | `am_echo` | 15 | `am_fenrir` | 17 | `am_michael` | 19 | `am_puck` |
+| 20 | `am_santa` | | | | | | |
+| **British female** | | | | | | | |
+| 21 | `bf_alice` | 22 | `bf_emma` | 23 | `bf_isabella` | 24 | `bf_lily` |
+| **British male** | | | | | | | |
+| 25 | `bm_daniel` | 26 | `bm_fable` | 27 | `bm_george` | 28 | `bm_lewis` |
+
+The code's prefix gives language and gender: `a` = US English, `b` = British English; `f` = female,
+`m` = male. `af_heart` (#4) is the voice the model's authors rate highest. There are also Spanish (`e`), French
 (`f`), Hindi (`h`), Italian (`i`), Japanese (`j`), Brazilian Portuguese (`p`) and Mandarin (`z`)
 voices; the script picks the language from the first letter. The full list and the authors' quality
 grades are in `VOICES.md` on the [model page](https://huggingface.co/hexgrad/Kokoro-82M).
