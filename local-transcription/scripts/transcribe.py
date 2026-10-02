@@ -23,6 +23,19 @@ from pathlib import Path
 GAP_WARN = 120.0  # flag silent-looking holes larger than this
 
 
+def load_wav(path):
+    """16 kHz mono 16-bit WAV -> float32 samples for faster-whisper.
+
+    Pass samples, never a path: given a path, faster-whisper 1.2.1 decodes with PyAV and calls
+    av.open(..., metadata_errors=...), which PyAV 19 rejects with a TypeError. ffmpeg has already
+    produced the WAV, so reading it here keeps PyAV out of the path entirely.
+    """
+    import wave
+    import numpy as np
+    with wave.open(str(path), "rb") as w:
+        return np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768.0
+
+
 def ts(t, sep=".", ms=False):
     h, rem = divmod(float(t), 3600)
     m, s = divmod(rem, 60)
@@ -98,7 +111,7 @@ def main():
     print("[3/3] transcribing...", flush=True)
     t0 = time.time()
     segments, info = model.transcribe(
-        str(wav), language=args.language, word_timestamps=args.words)
+        load_wav(wav), language=args.language, word_timestamps=args.words)
 
     txt = out / f"{stem}.transcript.txt"
     srt = out / f"{stem}.srt"

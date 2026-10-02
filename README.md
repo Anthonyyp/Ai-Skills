@@ -6,24 +6,28 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 
 ### Image
 
-| Skill | What it does | Requires |
-|---|---|---|
-| [gimp-image-editor](gimp-image-editor/) | GIMP control via Script-Fu / Python batch CLI — layered compositing, XCF/PSD, text layers, GEGL filters, chroma key, batch export, layer-preserving PDF/EPS. | GIMP 2.10+ (3.x preferred) · Python 3.8+ |
+| Skill | What it does | Cowork | Requires |
+|---|---|---|---|
+| [gimp-image-editor](gimp-image-editor/) | GIMP control via Script-Fu / Python batch CLI — layered compositing, XCF/PSD, text layers, GEGL filters, chroma key, batch export, layer-preserving PDF/EPS. | ✅ installs GIMP on demand; Script-Fu only | GIMP 2.10+ (3.x preferred) · Python 3.8+ |
 
 ### Audio & Video
 
-| Skill | What it does | Requires |
-|---|---|---|
-| [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. | `ffmpeg` + `ffprobe` on PATH |
-| [local-transcription](local-transcription/) | Offline speech-to-text via faster-whisper (Whisper models) — timestamped transcripts, SRT, word-level timings for editing, single-window transcription, coverage checks. | Python 3.8+ · `pip install faster-whisper` · `ffmpeg` on PATH |
-| [longform-video-edit](longform-video-edit/) | Cut a long recording down for sharing, end to end — measure dead air and on-screen motion, read it from contact sheets, decide cuts and how long silent demo moments need, ask the owner once, blur private on-screen data, mute words, render, then machine-QA the file until it passes. | Python 3.8+ · `pip install pillow numpy faster-whisper` · `ffmpeg` on PATH |
-| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. | Python 3.7+ · `pip install edge-tts` |
+| Skill | What it does | Cowork | Requires |
+|---|---|---|---|
+| [ffmpeg](ffmpeg/) | ffmpeg / ffprobe — probing, transcoding, lossless cut+concat, filter_complex pipelines, GIF↔video, subtitle burn-in, loudness normalization, HLS/DASH. | ✅ software encoders only | `ffmpeg` + `ffprobe` on PATH |
+| [local-transcription](local-transcription/) | Offline speech-to-text via faster-whisper (Whisper models) — timestamped transcripts, SRT, word-level timings for editing, single-window transcription, coverage checks. | ✅ allowlist 2 domains ([how](local-transcription/environments/cowork.md)) | Python 3.8+ · `pip install faster-whisper` · `ffmpeg` on PATH |
+| [longform-video-edit](longform-video-edit/) | Cut a long recording down for sharing, end to end — measure dead air and on-screen motion, read it from contact sheets, decide cuts and how long silent demo moments need, ask the owner once, blur private on-screen data, mute words, render, then machine-QA the file until it passes. | ✅ each step verified (not yet end to end); slow renders; transcripts need the [allowlist](local-transcription/environments/cowork.md) | Python 3.8+ · `pip install pillow numpy faster-whisper` · `ffmpeg` on PATH |
+| [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 via edge-tts (free Microsoft neural voices, no API key) — speakable-transcript writing, reliable per-paragraph rendering, voice selection. | ❌ Microsoft voice service unreachable | Python 3.7+ · `pip install edge-tts` |
 
 ### Claude Code
 
-| Skill | What it does | Requires |
-|---|---|---|
-| [local-token-usage-claude-code](local-token-usage-claude-code/) | Report what your Claude Code sessions actually cost — parses the local session logs, breaks usage down per session and per model, prices each turn at the rate of the model that generated it, using pricing fetched live from Anthropic's docs rather than hardcoded. Optional printable HTML report. | Python 3.7+ · Claude Code session logs |
+| Skill | What it does | Cowork | Requires |
+|---|---|---|---|
+| [local-token-usage-claude-code](local-token-usage-claude-code/) | Report what your Claude Code sessions actually cost — parses the local session logs, breaks usage down per session and per model, prices each turn at the rate of the model that generated it, using pricing fetched live from Anthropic's docs rather than hardcoded. Optional printable HTML report. | — Claude Code only | Python 3.7+ · Claude Code session logs |
+
+**Cowork** = whether the skill is known to work in Claude Cowork's sandbox, a throwaway Linux VM with an
+allowlisted network. ✅ verified there · ❌ known not to work · — not
+applicable. Where a skill needs Cowork setup, the steps are in its `environments/cowork.md`.
 
 Each skill's own README has the full requirements; the column lists what you must install before
 the skill is usable at all. Skills are self-contained — none *requires* another, though
@@ -33,6 +37,8 @@ the skill is usable at all. Skills are self-contained — none *requires* anothe
 Add new skills as a row above, under the right category heading.
 Add a new "### Category" section when nothing fits.
 Keep the "what it does" cell to one line.
+"Cowork" = ✅ only when actually verified in a Cowork session, ❌ when known broken, — when
+not applicable. Leave it "untested" rather than guess.
 "Requires" = external software the user must install first (binaries, packages, runtimes,
 an account/API key). Optional extras don't belong here — put those in the skill's own README.
 Write "none" if the skill is pure prompt guidance with no dependencies.

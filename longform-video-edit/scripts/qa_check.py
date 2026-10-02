@@ -79,6 +79,18 @@ def loudness_db(path, a, b):
     return float(m.group(1)) if m else None
 
 
+def load_wav(path):
+    """16 kHz mono 16-bit WAV -> float32 samples for faster-whisper.
+
+    Pass samples, never a path: given a path, faster-whisper 1.2.1 decodes with PyAV and calls
+    av.open(..., metadata_errors=...), which PyAV 19 rejects with a TypeError. ffmpeg has already
+    produced the WAV, so reading it here keeps PyAV out of the path entirely.
+    """
+    import wave
+    import numpy as np
+    with wave.open(str(path), "rb") as w:
+        return np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768.0
+
 _model = None
 def whisper():
     global _model
@@ -95,7 +107,7 @@ def words(path, a, b):
     try:
         run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", f"{a:.3f}", "-i", path, "-t",
              f"{b - a:.3f}", "-vn", "-ac", "1", "-ar", "16000", "-y", wav])
-        segs, _ = whisper().transcribe(wav, word_timestamps=True, vad_filter=False, beam_size=1)
+        segs, _ = whisper().transcribe(load_wav(wav), word_timestamps=True, vad_filter=False, beam_size=1)
         out = []
         for s in segs:
             for w in s.words or []:

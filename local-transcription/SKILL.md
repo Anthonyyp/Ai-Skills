@@ -12,6 +12,10 @@ machine. That last part is the reason to reach for it over a cloud model for any
 **Requires:** `pip install faster-whisper` and `ffmpeg` on PATH. Weights download once (~3 GB for
 `large-v3`) and are cached thereafter.
 
+**On Linux (`uname -s` → `Linux`), check whether this is Claude Cowork before starting.** If it is,
+read `environments/cowork.md` first: the model download needs two domains allowlisted, and every
+session starts with nothing installed.
+
 ## 1. Transcribe
 
 ```bash
