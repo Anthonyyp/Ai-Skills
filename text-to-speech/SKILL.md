@@ -10,7 +10,13 @@ an 82-million-parameter open voice model. It runs locally on CPU: no API key, no
 and nothing leaves the machine, so it's fine for confidential material.
 
 **Requires:** a Python 3.10–3.12 environment with `kokoro` installed (setup below, about a minute),
-and `ffmpeg` on PATH for MP3 output. First render downloads the model (~313 MB) once.
+and `ffmpeg` on PATH for MP3 output. The first render downloads the model (~313 MB) from Hugging Face
+and spaCy's English model (~13 MB, via pip from GitHub). **After that it runs fully offline**: the
+renderer detects the cached model and makes no network calls.
+
+**On Linux (`uname -s` → `Linux`), check whether this is Claude Cowork before starting.** If it is,
+read `environments/cowork.md` first: four domains must be allowlisted, and PyTorch must never be
+installed from PyPI there.
 
 ## Setup (once per machine)
 
@@ -20,18 +26,24 @@ fetches Python 3.12 if you don't have it:
 
 ```bash
 uv venv --python 3.12 ~/.venvs/kokoro
-uv pip install --python ~/.venvs/kokoro torch --index-url https://download.pytorch.org/whl/cpu
+uv pip install --python ~/.venvs/kokoro "torch==2.14.1" --index-url https://download.pytorch.org/whl/cpu
 uv pip install --python ~/.venvs/kokoro kokoro soundfile "transformers>=4.45" pip
 ```
 
 Why each piece is there:
-- **CPU torch first, from PyTorch's own index.** Without it you get the multi-gigabyte GPU build.
+- **CPU torch first, from PyTorch's own index, at an exact version.** Without the index you get the
+  multi-gigabyte GPU build (on Linux, PyPI only carries that one). The pinned version means a newly
+  published release, good or bad, never sneaks in. Verified with Kokoro: 2.14.1. For a fingerprint
+  pin as well (`--require-hashes`), see `environments/cowork.md`; hashes differ per OS and Python.
 - **`transformers>=4.45`.** Unpinned, the resolver backtracks to a 2021 release that needs a Rust
   compiler and fails.
 - **`pip` inside the environment.** On first run Kokoro installs a small English language model
   (spaCy `en_core_web_sm`, ~13 MB) and needs pip to do it.
 
-The environment comes to about 950 MB, mostly PyTorch. Run the renderer with **that environment's
+**No system espeak-ng needed.** Kokoro's pronunciation package bundles its own copy
+(`espeakng-loader`, from PyPI). Verified on a machine with none installed.
+
+The environment comes to about 1–1.2 GB (950 MB measured on Windows, 1.2 GB on Linux), mostly PyTorch. Run the renderer with **that environment's
 python**: `~/.venvs/kokoro/bin/python` on macOS/Linux, `~\.venvs\kokoro\Scripts\python.exe` on
 Windows. Run it with any other Python and it prints these instructions instead of failing obscurely.
 
@@ -147,11 +159,12 @@ before quoting a time for something long.
   domain are not affiliated with it.
 - **Training data** was public-domain and openly licensed audio, plus some synthetic audio from
   commercial TTS systems. That's a question about how the model was built, not about your use of it.
-- **espeak-ng**, which Kokoro can use as a pronunciation fallback, is GPL. Using it as an installed
-  tool is fine; it only matters if you bundle it into software you distribute.
+- **espeak-ng**, which Kokoro bundles (via `espeakng-loader`) as a pronunciation fallback, is GPL.
+  Using it is fine; it only matters if you redistribute it inside software you sell.
 
 ## Limits
 
 - **No voice cloning** and no SSML. Pronunciation is fixed in the transcript.
 - **English is the strong suit.** The other languages work but are less polished.
-- **First run downloads** the model (~313 MB) and a ~13 MB language model, then caches both.
+- **First run needs internet** for the model (~313 MB) and a ~13 MB language model. Both are cached,
+  and every later render is offline.

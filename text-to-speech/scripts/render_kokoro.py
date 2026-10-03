@@ -48,6 +48,16 @@ def sanitize(text: str) -> str:
     return text
 
 
+def model_cached(voice: str) -> bool:
+    """True if the Kokoro weights, config and this voice are already in the Hugging Face cache."""
+    from pathlib import Path
+    hub = os.environ.get("HF_HUB_CACHE") or os.path.join(
+        os.environ.get("HF_HOME") or os.path.join(Path.home(), ".cache", "huggingface"), "hub")
+    snaps = Path(hub) / "models--hexgrad--Kokoro-82M" / "snapshots"
+    need = ["config.json", "kokoro-v1_0.pth", f"voices/{voice}.pt"]
+    return snaps.is_dir() and any(all((s / n).exists() for n in need) for s in snaps.iterdir())
+
+
 def split_paragraphs(text: str):
     return [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
 
@@ -60,6 +70,17 @@ def main():
     ap.add_argument("--speed", type=float, default=1.0, help="Speaking rate (default 1.0)")
     ap.add_argument("--gap", type=float, default=0.65, help="Seconds of silence between paragraphs")
     args = ap.parse_args()
+
+    # Once the model and this voice are cached, render fully offline. Hugging Face reads the
+    # offline switch at import time, so it has to be set before kokoro is imported.
+    if "HF_HUB_OFFLINE" not in os.environ and model_cached(args.voice):
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        print("model cached: rendering offline", flush=True)
+    # Known-harmless library warnings (LSTM dropout, deprecated weight_norm / jit) read like
+    # failures to users. Real errors still raise.
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings("ignore", category=FutureWarning)
 
     try:
         import numpy as np

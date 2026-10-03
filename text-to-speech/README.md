@@ -15,9 +15,9 @@ Install: see the [links in the repo README](../README.md#install).
 - **Python 3.10–3.12** in its own environment. Kokoro's package refuses 3.13+.
   [uv](https://docs.astral.sh/uv/) will fetch 3.12 for you.
 - **`kokoro`, `soundfile`, CPU PyTorch.** The exact three commands, and why each one is needed,
-  are in `SKILL.md` under "Setup". About 950 MB installed.
+  are in `SKILL.md` under "Setup". About 1–1.2 GB installed. No system espeak-ng needed (bundled).
 - **`ffmpeg`** on PATH, for MP3 output. Not needed if you write `.wav`.
-- **Internet once**, for the first render's ~313 MB model download. Fully offline after that.
+- **Internet once**, for the first render's ~313 MB model download. The renderer goes offline automatically after that.
 
 ## Layout
 
