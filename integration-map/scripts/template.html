@@ -1,0 +1,74 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>{{TITLE_TEXT}}</title>
+<style>
+  @page { size: 11in 8.5in; margin: 0.25in 0.3in; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }
+  html { font-size: 10px; }
+  body { margin: 0; background: #fff; color: #333a44; font: 1rem/1.25 "Segoe UI", "Helvetica Neue", Arial, sans-serif; width: 1000px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; border-bottom: 2px solid #1f2a37; padding-bottom: 0.4rem; margin-bottom: 0.4rem; }
+  h1 { color: #1f2a37; font: 700 1.9rem/1.1 "Segoe UI", Arial, sans-serif; margin: 0; }
+  h1 em { color: #2f6f8f; font-style: normal; }
+  .asof { color: #6b7280; font: 600 0.9rem/1.3 "Segoe UI", Arial, sans-serif; letter-spacing: .06em; text-transform: uppercase; text-align: right; white-space: nowrap; }
+  .sub { color: #6b7280; margin: 0 0 0.7rem; }
+  #tree { position: relative; display: grid; grid-template-columns: 11.2rem 1fr; column-gap: 2.6rem; align-items: center; }
+  .sides { display: grid; gap: 0.7rem; }
+  .side { display: grid; grid-template-columns: 13.2rem 1fr; column-gap: 2.4rem; align-items: center; }
+  .cats { display: grid; gap: 0.3rem; }
+  .cat { display: grid; grid-template-columns: 17.2rem 1fr; column-gap: 1.4rem; align-items: center; }
+  .node { position: relative; z-index: 2; padding: 0.3rem 0.7rem; border: 1.5px solid var(--edge); background: #fff; color: #1f2a37; }
+  .t0 { --edge: #1f2a37; background: #1f2a37; color: #fff; font: 700 1.2rem/1.2 "Segoe UI", Arial, sans-serif; padding: 0.8rem; text-align: center; }
+  .t1 { font: 700 1.15rem/1.2 "Segoe UI", Arial, sans-serif; padding: 0.6rem 0.8rem; background: var(--fill); color: var(--ink); }
+  .t1 small { display: block; font: 600 0.88rem/1.2 "Segoe UI", Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; opacity: .8; margin-top: 1px; }
+  .t2 { font: 700 1.01rem/1.2 "Segoe UI", Arial, sans-serif; display: flex; justify-content: space-between; gap: 0.6rem; background: var(--tint); }
+  .t2 span { color: var(--count); }
+  .leaf { position: relative; z-index: 2; padding: 1px 0; }
+  .leaf code { font: 0.93rem/1.2 Consolas, "Cascadia Mono", Menlo, monospace; color: #1f2a37; }
+  /* Systems take these in order; the link, operations and gap branches have their own. */
+  .k-system.s0 { --edge: #1f2a37; --fill: #1f2a37; --ink: #fff; --tint: #eef1f5; --count: #2f6f8f; }
+  .k-system.s1 { --edge: #2f6f8f; --fill: #3d8bb0; --ink: #fff; --tint: #e3f0f6; --count: #2f6f8f; }
+  .k-system.s2 { --edge: #4b6a3a; --fill: #5f8a49; --ink: #fff; --tint: #edf4e8; --count: #4b6a3a; }
+  .k-system.s3 { --edge: #6a4a8a; --fill: #7f5ca3; --ink: #fff; --tint: #f1ecf6; --count: #6a4a8a; }
+  .k-link { --edge: #2f6f8f; --fill: #e3f0f6; --ink: #1f2a37; --tint: #fff; --count: #2f6f8f; }
+  .k-ops { --edge: #6b7280; --fill: #f3f4f6; --ink: #1f2a37; --tint: #f9fafb; --count: #4b5563; }
+  .k-gap { --edge: #a3361f; --fill: #fff; --ink: #a3361f; --tint: #fff; --count: #a3361f; }
+  .k-gap .node { border-style: dashed; color: #a3361f; }
+  @media screen { body { margin: 16px; } }
+  svg#wires { position: absolute; inset: 0; z-index: 1; overflow: visible; pointer-events: none; }
+</style></head>
+<body>
+<div class="head"><h1>{{TITLE}}</h1><div class="asof">{{ASOF}}</div></div>
+<p class="sub">{{SUBTITLE}}</p>
+<div id="tree">
+  <div class="node t0" id="root">{{ROOT}}</div>
+  <div class="sides">{{BRANCHES}}</div>
+  <svg id="wires"></svg>
+</div>
+<script>
+  // Shrink the type until the whole map fits one landscape Letter page (8.5in less margins, at 96 px/in).
+  const MAX = (8.5 - 0.5) * 96 - 4;
+  let size = 10;
+  while (document.body.scrollHeight > MAX && size > 6.5) { size -= 0.25; document.documentElement.style.fontSize = size + 'px'; }
+  const tree = document.getElementById('tree').getBoundingClientRect();
+  const svg = document.getElementById('wires');
+  const box = el => { const r = el.getBoundingClientRect(); return { l: r.left - tree.left, r: r.right - tree.left, y: r.top - tree.top + r.height / 2 }; };
+  const line = (a, b, color, dashed) => {
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const mx = a.r + (b.l - a.r) / 2;
+    p.setAttribute('d', `M${a.r},${a.y} H${mx} V${b.y} H${b.l}`);
+    p.setAttribute('fill', 'none'); p.setAttribute('stroke', color); p.setAttribute('stroke-width', 1.4);
+    if (dashed) p.setAttribute('stroke-dasharray', '4 3');
+    svg.appendChild(p);
+  };
+  const root = box(document.getElementById('root'));
+  for (const side of document.querySelectorAll('.side')) {
+    const t1 = side.querySelector('.t1'), gap = side.classList.contains('k-gap');
+    line(root, box(t1), '#1f2a37', gap);
+    for (const cat of side.querySelectorAll('.cat')) {
+      const t2 = cat.querySelector('.t2');
+      line(box(t1), box(t2), gap ? '#a3361f' : '#6b7280', gap);
+      line(box(t2), box(cat.querySelector('.leaf')), '#d9dde3', gap);
+    }
+  }
+  document.body.classList.add('drawn');
+</script>
+</body></html>

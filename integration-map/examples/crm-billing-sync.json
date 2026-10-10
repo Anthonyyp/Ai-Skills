@@ -1,0 +1,60 @@
+{
+  "title": "The integration's surface area",
+  "emphasis": "surface area",
+  "asof": ["Customer sync: Harbor CRM and Ledgerline Billing", "As it will go live · 14 Mar 2027"],
+  "subtitle": "Everything the integration has in production, tier by tier: where it lives, what kind of piece it is, and the pieces. Dashed: not ready for go-live.",
+  "root": "Customer sync",
+  "branches": [
+    {
+      "name": "Harbor CRM",
+      "note": "The system of record",
+      "kind": "system",
+      "groups": [
+        {"name": "Fields added", "count": "4", "items": "Accounts: `Billing_Customer_ID`, `Billing_Status`, `Last_Synced` · Contacts: `Billing_Contact_ID`"},
+        {"name": "Fields synced", "count": "22", "items": "14 on Accounts, 8 on Contacts: name, addresses, payment terms, credit limit, the account owner"},
+        {"name": "Automations", "count": "2", "items": "On create and edit of an account or a billing contact: post the record to the billing API"},
+        {"name": "Rules", "count": "3", "items": "Credit limit read-only once billing has invoiced · billing contact required for active accounts · no deleting an account with open invoices"},
+        {"name": "Access", "count": "2", "items": "Integration user (API only) · permission set for the billing fields"}
+      ]
+    },
+    {
+      "name": "Ledgerline Billing",
+      "note": "Invoices and payments",
+      "kind": "system",
+      "groups": [
+        {"name": "Customer fields", "count": "3", "items": "`crm_account_id` on customers · `crm_contact_id` on contacts · `crm_owner_email`"},
+        {"name": "Webhooks", "count": "3", "items": "`customer.updated`, `invoice.paid`, `invoice.overdue`"},
+        {"name": "Access", "count": "1", "items": "API key scoped to customers and invoices, read and write"}
+      ]
+    },
+    {
+      "name": "Between the two",
+      "note": "Traffic and identity",
+      "kind": "link",
+      "groups": [
+        {"name": "CRM to billing", "count": "seconds", "items": "Each saved account or billing contact is upserted by its `crm_account_id`"},
+        {"name": "Billing to CRM", "count": "seconds", "items": "Webhooks update `Billing_Status` and `Last_Synced`; overdue invoices open a task for the owner"},
+        {"name": "Nightly reconcile", "count": "1am", "items": "Compares every active customer on both sides and repairs differences"},
+        {"name": "Shared ids", "count": "2", "items": "CRM account id in `crm_account_id` · billing customer id in `Billing_Customer_ID`"}
+      ]
+    },
+    {
+      "name": "Running it",
+      "note": "Operations",
+      "kind": "ops",
+      "groups": [
+        {"name": "Schedules", "count": "1", "items": "Nightly reconcile, 1am"},
+        {"name": "Credentials", "count": "2", "items": "CRM integration user's OAuth client · billing API key, rotated every 90 days"},
+        {"name": "Monitoring", "count": "1", "items": "Failed calls email the ops inbox, with the record and the error"}
+      ]
+    },
+    {
+      "name": "Not ready yet",
+      "note": "Before go-live",
+      "kind": "gap",
+      "groups": [
+        {"name": "Open", "count": "3", "items": "Retry for failed webhooks · the initial load of 40,000 customers · who owns an account when the CRM owner has left"}
+      ]
+    }
+  ]
+}

@@ -19,6 +19,12 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 | [longform-video-edit](longform-video-edit/) | Cut a long recording down for sharing, end to end — measure dead air and on-screen motion, read it from contact sheets, decide cuts and how long silent demo moments need, ask the owner once, blur private on-screen data, mute words, render, then machine-QA the file until it passes. | Yes | Python 3.8+ · `pip install pillow numpy faster-whisper` · `ffmpeg` on PATH |
 | [text-to-speech](text-to-speech/) | Written content → natural-sounding MP3 with Kokoro-82M, a local open voice model (offline, Apache 2.0, commercial use OK) — speakable-transcript writing, paced per-paragraph rendering, 54 voices. | Yes | Python 3.10–3.12 env · `pip install kokoro soundfile` + CPU torch · `ffmpeg` on PATH |
 
+### Documentation
+
+| Skill | What it does | Cowork | Requires |
+|---|---|---|---|
+| [integration-map](integration-map/) | One-page tiered map of a software integration as it will go live: every system it touches, what moves between them, how it's run and what isn't ready, with each kind of piece counted from the source. JSON spec in, PDF and PNG out. | HTML only | Python 3.8+ · Chrome, Edge or Chromium for PDF/PNG |
+
 ### Claude Code
 
 | Skill | What it does | Cowork | Requires |
