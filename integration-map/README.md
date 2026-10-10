@@ -3,7 +3,8 @@
 A one-page overview of a software integration as it will run in production. It's a tiered tree:
 
 - the integration;
-- each system it lives in, what moves between them, how it's run, and what isn't ready yet;
+- each system it lives in, what moves between them, how it's run, and, if you want it, the planned pieces not
+  built yet;
 - the kinds of piece in each, with real counts;
 - the pieces.
 

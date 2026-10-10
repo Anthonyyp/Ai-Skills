@@ -63,7 +63,9 @@ def build(spec):
     return (tpl.replace("{{TITLE_TEXT}}", html.escape(name)).replace("{{TITLE}}", title)
             .replace("{{ASOF}}", "<br>".join(inline(x) for x in spec.get("asof", [])))
             .replace("{{SUBTITLE}}", inline(spec.get("subtitle", SUBTITLE))).replace("{{ROOT}}", inline(spec["root"]))
-            .replace("{{BRANCHES}}", branches))
+            .replace("{{BRANCHES}}", branches)
+            .replace("{{KEY}}", ' <span class="key">Dashed: planned, not built yet.</span>'
+                     if any(b.get("kind") == "gap" for b in spec["branches"]) else ""))
 
 
 def run(browser, args):

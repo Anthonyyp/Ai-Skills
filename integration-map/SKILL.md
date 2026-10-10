@@ -1,6 +1,6 @@
 ---
 name: integration-map
-description: Map the surface area of a software integration as it will run in production, on one page. It's a tiered tree of every system the integration touches, what flows between them, how it's run, and what isn't ready for go-live. Each kind of piece has a real count, and every piece is named. Trigger on "integration map", "map the surface area", "everything this integration touches", "what does this integration consist of", "go-live overview of the integration", "inventory of the build" or "tiered map of the integration". Renders a PDF and a PNG from a small JSON spec.
+description: Map the surface area of a software integration as it will run in production, on one page. It's a tiered tree of every system the integration touches, what flows between them, how it's run, and, if the user wants it, the planned pieces that aren't built yet. Each kind of piece has a real count, and every piece is named. Trigger on "integration map", "map the surface area", "everything this integration touches", "what does this integration consist of", "go-live overview of the integration", "inventory of the build" or "tiered map of the integration". Renders a PDF and a PNG from a small JSON spec.
 ---
 
 # Integration map
@@ -13,7 +13,8 @@ the integration ── where it lives ── what kind of piece, and how many �
 ```
 
 It is an overview, not a design document. Someone should be able to look at it for a minute and know
-three things: how big the integration is, where every part sits, and what's still missing.
+how big the integration is and where every part sits. With the optional gap branch, they also see
+which planned parts aren't built yet.
 
 ## The shape: three tiers under one root
 
@@ -25,10 +26,10 @@ three things: how big the integration is, where every part sits, and what's stil
   | `system` | Each system the integration lives in: a CRM, a billing platform, a database, a marketing tool | Fields added, fields synced, automations and workflows, functions or code, rules and validations, access, screens |
   | `link` | What moves between the systems, and how records are matched | Each direction of traffic, scheduled syncs, webhooks, shared ids |
   | `ops` | What it takes to run it | Schedules, credentials, monitoring and alerts, logs, the people or teams who own it |
-  | `gap` | What isn't ready for go-live | One group, or one per area if there are many |
+  | `gap` | Optional, and only if the user says yes: planned pieces not built yet | One group, or one per area, such as to build and to set up |
 
-  Systems are coloured in the order they appear, so put the system of record first. `gap` is always
-  last and always drawn dashed.
+  Systems are coloured in the order they appear, so put the system of record first. `gap`, when it's
+  there, comes last and is drawn dashed.
 - **Tier 2, the kinds of piece**, each with a count.
 - **Tier 3, the pieces themselves**, in one or two lines per group.
 
@@ -55,10 +56,28 @@ three things: how big the integration is, where every part sits, and what's stil
 
   None of that is running in production. A check that does run in production, such as a monitor or
   a nightly reconcile, goes under `ops`.
-- **Where what's built differs from what will go live,** map the production piece and list it under
-  `gap` until it exists. A prototype's temporary credential is the usual example.
-- **Always include the `gap` branch.** If nothing is missing, say that in it. The gap branch is what
-  makes the map a go-live overview rather than an inventory.
+- **Where what's built differs from what will go live,** map the production piece. If there's a gap
+  branch, list the piece there too until it exists. A prototype's temporary credential is the usual
+  example.
+
+## Ask about the gap branch
+
+Before writing the spec, ask the user whether to include a "Not ready yet" branch. Give a very short
+preview of what would go in it, for example:
+
+> Include a "Not ready yet" branch? It would list the 8 planned pieces that aren't built yet: error
+> logging, a retry for failed pushes, the initial load, and 5 more.
+
+- **If yes,** the branch holds only components that are planned but not yet built: pieces that will
+  exist in production and don't exist yet.
+- **Leave out of it:**
+  - open decisions;
+  - risks;
+  - data clean-up and migrations of existing data;
+  - preconditions, such as freeing room under a limit.
+
+  Those belong in the project's own follow-ups list, not on the map.
+- **If no,** leave the branch off. The map then shows only what exists.
 
 ## Count, don't estimate
 
@@ -123,7 +142,7 @@ landscape.
   - every group has a count;
   - the connectors reach every box.
 - **Check the content:**
-  - the `gap` branch is there;
+  - if there's a `gap` branch, it holds only planned components;
   - no development or test tooling slipped in;
   - names match what each system calls them;
   - the counts were recounted today.

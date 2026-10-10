@@ -23,7 +23,7 @@ Agent skills for Claude Code. Each top-level folder is one skill.
 
 | Skill | What it does | Cowork | Requires |
 |---|---|---|---|
-| [integration-map](integration-map/) | One-page tiered map of a software integration as it will go live: every system it touches, what moves between them, how it's run and what isn't ready, with each kind of piece counted from the source. JSON spec in, PDF and PNG out. | HTML only | Python 3.8+ · Chrome, Edge or Chromium for PDF/PNG |
+| [integration-map](integration-map/) | One-page tiered map of a software integration as it will go live: every system it touches, what moves between them, how it's run and, optionally, the planned pieces not built yet, with each kind of piece counted from the source. JSON spec in, PDF and PNG out. | HTML only | Python 3.8+ · Chrome, Edge or Chromium for PDF/PNG |
 
 ### Claude Code
 

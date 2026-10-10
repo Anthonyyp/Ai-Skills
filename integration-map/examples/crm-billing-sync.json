@@ -110,13 +110,13 @@
     },
     {
       "name": "Not ready yet",
-      "note": "Before go-live",
+      "note": "Planned, not built",
       "kind": "gap",
       "groups": [
         {
-          "name": "Open",
+          "name": "Planned",
           "count": "3",
-          "items": "Retry for failed webhooks · the initial load of 40,000 customers · who owns an account when the CRM owner has left"
+          "items": "Retry for failed webhooks · the initial load of 40,000 customers · an alert when the nightly reconcile fails"
         }
       ]
     }
