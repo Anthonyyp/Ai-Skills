@@ -10,6 +10,7 @@ import argparse, html, json, os, re, shutil, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KINDS = {"system", "link", "ops", "gap"}
+SUBTITLE = "A high-level view of the entire surface of the integration."
 
 CANDIDATES = [
     "google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "chrome", "msedge", "microsoft-edge",
@@ -39,7 +40,8 @@ def inline(s):
 
 
 def build(spec):
-    title = html.escape(spec["title"])
+    name = spec.get("title") or spec["root"]
+    title = html.escape(name)
     if spec.get("emphasis"):
         title = title.replace(html.escape(spec["emphasis"]), "<em>%s</em>" % html.escape(spec["emphasis"]), 1)
     branches, systems = "", 0
@@ -58,9 +60,9 @@ def build(spec):
         branches += ('<div class="side %s"><div class="node t1">%s<small>%s</small></div><div class="cats">%s</div></div>'
                      % (cls, inline(b["name"]), inline(b.get("note", "")), groups))
     tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
-    return (tpl.replace("{{TITLE_TEXT}}", html.escape(spec["title"])).replace("{{TITLE}}", title)
+    return (tpl.replace("{{TITLE_TEXT}}", html.escape(name)).replace("{{TITLE}}", title)
             .replace("{{ASOF}}", "<br>".join(inline(x) for x in spec.get("asof", [])))
-            .replace("{{SUBTITLE}}", inline(spec.get("subtitle", ""))).replace("{{ROOT}}", inline(spec["root"]))
+            .replace("{{SUBTITLE}}", inline(spec.get("subtitle", SUBTITLE))).replace("{{ROOT}}", inline(spec["root"]))
             .replace("{{BRANCHES}}", branches))
 
 

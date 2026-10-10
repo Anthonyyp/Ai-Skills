@@ -81,11 +81,8 @@ three things: how big the integration is, where every part sits, and what's stil
 
 ```json
 {
-  "title": "The integration's surface area",
-  "emphasis": "surface area",
-  "asof": ["Customer sync: Harbor CRM and Ledgerline Billing", "As it will go live · 14 Mar 2027"],
-  "subtitle": "Everything the integration has in production, tier by tier. Dashed: not ready for go-live.",
-  "root": "Customer sync",
+  "root": "Customer sync: Harbor CRM and Ledgerline Billing",
+  "asof": ["As it will go live", "14 Mar 2027"],
   "branches": [
     { "name": "Harbor CRM", "note": "The system of record", "kind": "system",
       "groups": [ { "name": "Fields added", "count": "4", "items": "Accounts: `Billing_Customer_ID`, ..." } ] }
@@ -93,8 +90,13 @@ three things: how big the integration is, where every part sits, and what's stil
 }
 ```
 
-- **`emphasis`** highlights those words in the title.
-- **`asof`** is the line or two at the top right: what the map covers, and its date.
+- **`root`** is the project's name. It's the root of the tree and the page's title.
+- **The subtitle** is always "A high-level view of the entire surface of the integration." Override it
+  with `subtitle` only if you have a reason to.
+- **`asof`** is the line or two at the top right: which state the map shows (as it will go live) and
+  its date.
+- **Optional extras:** `title`, to give the page a different title from the root, and `emphasis`, to
+  highlight some words in it.
 - **Backticks** in any text become code. Use them for API names, so readers can search for them.
 
 `examples/crm-billing-sync.json` is a full example. It's fictional.
