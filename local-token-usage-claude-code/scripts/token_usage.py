@@ -21,10 +21,19 @@ with open(args.config, encoding='utf-8-sig') as f:
 MODEL_PRICES = cfg['prices']
 DEFAULT_PRICES = cfg.get('default_prices', {"input": 3.00, "output": 15.00, "cache_write": 3.75, "cache_read": 0.30})
 
+# Longest key first. A dict-order startswith would price "claude-opus-5-5" at the
+# "claude-opus-5" rate whenever the shorter key happened to come first.
+_PRICE_KEYS = sorted(MODEL_PRICES, key=len, reverse=True)
+
 def get_prices(model):
-    for key, p in MODEL_PRICES.items():
-        if model.startswith(key): return p
+    for key in _PRICE_KEYS:
+        if model.startswith(key): return MODEL_PRICES[key]
     return DEFAULT_PRICES
+
+def cache_write_1h_rate(p):
+    # 1-hour cache writes bill at 2x base input; 5-minute writes ("cache_write") at 1.25x.
+    # Use the config's own rate when it has one.
+    return p.get("cache_write_1h", p["input"] * 2.0)
 
 cutoff_ts = (datetime.now(timezone.utc) - timedelta(hours=HOURS)).timestamp()
 claude_dir = os.path.expanduser("~/.claude/projects")
@@ -39,122 +48,174 @@ cwd = os.getcwd()
 project_slug = re.sub(r'[-]+', '-', re.sub(r'[/\\:.]', '-', cwd)).strip('-')
 search_dirs = [os.path.join(claude_dir, project_slug)] if SCOPE == "current" else [claude_dir]
 
-files = []
+# -- Collect transcripts: main sessions plus the subagents they spawned --------------
+# A subagent's transcript lives at <project>/<session-id>/subagents/<agent>.jsonl. Its
+# usage is real spend, so it is counted under the session that spawned it.
+def parent_of(sub_fp):
+    return os.path.dirname(os.path.dirname(sub_fp)) + '.jsonl'
+
+main_files, sub_files = set(), []
 for base in search_dirs:
     for root, dirs, fnames in os.walk(base):
-        dirs[:] = [d for d in dirs if d != 'subagents']
         for fname in fnames:
-            if fname.endswith('.jsonl'):
-                fp = os.path.join(root, fname)
-                try:
-                    if os.path.getmtime(fp) > cutoff_ts:
-                        files.append(fp)
-                except:
-                    pass
+            if not fname.endswith('.jsonl'): continue
+            fp = os.path.join(root, fname)
+            try:
+                if os.path.getmtime(fp) <= cutoff_ts: continue
+            except OSError:
+                continue
+            if os.path.basename(root) == 'subagents': sub_files.append(fp)
+            else: main_files.add(fp)
+for sp in sub_files:
+    if os.path.exists(parent_of(sp)): main_files.add(parent_of(sp))
 
-results = []
-global_model_costs = {}
 cutoff_dt = datetime.fromtimestamp(cutoff_ts, tz=timezone.utc)
 
-for fpath in sorted(files):
+def read_entries(fp):
+    with open(fp, 'r', encoding='utf-8', errors='replace') as f:
+        for n, line in enumerate(f):
+            line = line.strip()
+            if not line: continue
+            try: yield n, json.loads(line)
+            except: continue
+
+def entry_ts(entry):
+    ts_str = entry.get("timestamp", "")
+    if not ts_str: return None
+    try: return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+    except: return None
+
+# -- Count each API request ONCE ------------------------------------------------------
+# Claude Code writes one transcript line per content block of a response (thinking,
+# text, each tool_use), and EVERY one of those lines carries the usage of the whole
+# request. Lines written mid-stream carry a partial output_tokens; the last carries the
+# completed figure. A resumed or forked session can also copy the same lines into a
+# second file. So: key on (message.id, requestId), keep the line with the largest
+# output_tokens, and attribute the request to the first session that logged it.
+# Summing every line instead overstates spend by roughly 2x.
+calls = {}
+raw_lines = 0
+
+def record_usage(entry, fp, n, session_key, is_sub):
+    global raw_lines
+    msg = entry.get("message") or {}
+    usage = msg.get("usage")
+    model = msg.get("model", "")
+    if not usage or model == "<synthetic>": return
+    raw_lines += 1
+    mid, rid = msg.get("id"), entry.get("requestId")
+    key = (mid, rid) if (mid and rid) else ("line", fp, n)   # no ids: can't be matched, count as-is
+    out_tok = usage.get("output_tokens", 0) or 0
+    prev = calls.get(key)
+    if prev is None:
+        calls[key] = dict(session=session_key, sub=is_sub, model=model, usage=usage, out=out_tok)
+    elif out_tok > prev["out"]:
+        prev["usage"], prev["out"] = usage, out_tok
+
+def blank_meta():
+    return dict(project=None, user_msgs=0, first_prompt="", first_ts=None, last_ts=None, tool_counts={})
+
+meta = {}
+for fpath in sorted(main_files):
+    md = blank_meta()
+    try:
+        for n, entry in read_entries(fpath):
+            if md["project"] is None and entry.get("cwd"):
+                md["project"] = os.path.basename(entry["cwd"].rstrip('/\\'))
+            ts = entry_ts(entry)
+            if ts is None or ts < cutoff_dt: continue
+            if md["first_ts"] is None: md["first_ts"] = ts
+            md["last_ts"] = ts
+            if entry.get("type") == "user":
+                md["user_msgs"] += 1
+                if not md["first_prompt"]:
+                    c = entry.get("message", {}).get("content", "")
+                    if isinstance(c, list):
+                        for item in c:
+                            if isinstance(item, dict) and item.get("type") == "text":
+                                md["first_prompt"] = item.get("text", "")[:120]; break
+                    elif isinstance(c, str):
+                        md["first_prompt"] = c[:120]
+            if entry.get("type") == "assistant":
+                record_usage(entry, fpath, n, fpath, False)
+                for c in (entry.get("message", {}).get("content") or []):
+                    if isinstance(c, dict) and c.get("type") == "tool_use":
+                        t = c.get("name", "?")
+                        md["tool_counts"][t] = md["tool_counts"].get(t, 0) + 1
+    except Exception as e:
+        sys.stderr.write(f"ERR {fpath}: {e}\n"); continue
+    meta[fpath] = md
+
+for fpath in sorted(sub_files):
+    try:
+        for n, entry in read_entries(fpath):
+            ts = entry_ts(entry)
+            if ts is None or ts < cutoff_dt: continue
+            if entry.get("type") == "assistant":
+                record_usage(entry, fpath, n, parent_of(fpath), True)
+    except Exception as e:
+        sys.stderr.write(f"ERR {fpath}: {e}\n")
+
+# -- Price each request once, then roll up per session and per model -----------------
+def blank_totals():
+    return dict(inp=0, out=0, cw=0, cr=0, cost=0.0, input_cost=0.0, output_cost=0.0, cw_cost=0.0,
+                cr_cost=0.0, sub_cost=0.0, calls=0, model_costs={}, models=set())
+
+sessions = {}
+global_model_costs = {}
+for c in calls.values():
+    u, p = c["usage"], get_prices(c["model"])
+    i_tok  = u.get("input_tokens", 0) or 0
+    o_tok  = c["out"]
+    cw_tok = u.get("cache_creation_input_tokens", 0) or 0
+    cr_tok = u.get("cache_read_input_tokens", 0) or 0
+    cw_1h  = min((u.get("cache_creation") or {}).get("ephemeral_1h_input_tokens", 0) or 0, cw_tok)
+    _ic = i_tok / 1e6 * p["input"]
+    _oc = o_tok / 1e6 * p["output"]
+    _wc = ((cw_tok - cw_1h) * p["cache_write"] + cw_1h * cache_write_1h_rate(p)) / 1e6
+    _rc = cr_tok / 1e6 * p["cache_read"]
+    turn_cost = _ic + _oc + _wc + _rc
+    s = sessions.setdefault(c["session"], blank_totals())
+    s["inp"] += i_tok; s["out"] += o_tok; s["cw"] += cw_tok; s["cr"] += cr_tok; s["calls"] += 1
+    s["cost"] += turn_cost
+    s["input_cost"] += _ic; s["output_cost"] += _oc; s["cw_cost"] += _wc; s["cr_cost"] += _rc
+    if c["sub"]: s["sub_cost"] += turn_cost
+    m = c["model"]
+    if m:
+        s["models"].add(m)
+        s["model_costs"][m] = s["model_costs"].get(m, 0.0) + turn_cost
+        global_model_costs[m] = global_model_costs.get(m, 0.0) + turn_cost
+
+def project_from_path(fpath):
     try:
         proj_raw = fpath.split("projects")[1].split(os.sep)[1]
     except:
         proj_raw = os.path.basename(os.path.dirname(fpath))
-    project = None
+    home_slug = re.sub(r'[^a-zA-Z0-9]', '-', os.path.expanduser('~'))
+    rel = proj_raw[len(home_slug):].lstrip('-') if proj_raw.startswith(home_slug) else proj_raw
+    segs = re.split(r'-{2,}', rel)
+    return re.sub(r'-+', ' ', segs[-1]).strip() or re.sub(r'-+', ' ', rel).strip() or proj_raw
 
-    session_id = os.path.splitext(os.path.basename(fpath))[0][:8]
-    inp = out = cw = cr = cost = 0.0
-    input_cost = output_cost = cw_cost = cr_cost = 0.0
-    tool_counts = {}
-    model_costs = {}
-    user_msgs = 0
-    first_ts = last_ts = None
-    first_prompt = ""
-    models = set()
-
-    try:
-        with open(fpath, 'r', encoding='utf-8', errors='replace') as f:
-            for line in f:
-                line = line.strip()
-                if not line: continue
-                try: entry = json.loads(line)
-                except: continue
-
-                if project is None and entry.get("cwd"):
-                    project = os.path.basename(entry["cwd"].rstrip('/\\'))
-
-                ts_str = entry.get("timestamp", "")
-                ts = None
-                if ts_str:
-                    try:
-                        ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-                    except: pass
-
-                if ts is None or ts < cutoff_dt:
-                    continue
-
-                if first_ts is None: first_ts = ts
-                last_ts = ts
-
-                if entry.get("type") == "user":
-                    user_msgs += 1
-                    if not first_prompt:
-                        c = entry.get("message", {}).get("content", "")
-                        if isinstance(c, list):
-                            for item in c:
-                                if isinstance(item, dict) and item.get("type") == "text":
-                                    first_prompt = item.get("text", "")[:120]; break
-                        elif isinstance(c, str):
-                            first_prompt = c[:120]
-
-                if entry.get("type") == "assistant":
-                    msg = entry.get("message", {})
-                    usage = msg.get("usage", {})
-                    m = msg.get("model", "")
-                    p = get_prices(m)
-                    i_tok  = usage.get("input_tokens", 0)
-                    o_tok  = usage.get("output_tokens", 0)
-                    cw_tok = usage.get("cache_creation_input_tokens", 0)
-                    cr_tok = usage.get("cache_read_input_tokens", 0)
-                    inp += i_tok; out += o_tok; cw += cw_tok; cr += cr_tok
-                    _ic = i_tok/1e6*p["input"]
-                    _oc = o_tok/1e6*p["output"]
-                    _wc = cw_tok/1e6*p["cache_write"]
-                    _rc = cr_tok/1e6*p["cache_read"]
-                    turn_cost = _ic + _oc + _wc + _rc
-                    cost += turn_cost
-                    input_cost += _ic; output_cost += _oc; cw_cost += _wc; cr_cost += _rc
-                    if m and m != "<synthetic>":
-                        models.add(m)
-                        model_costs[m] = model_costs.get(m, 0.0) + turn_cost
-                        global_model_costs[m] = global_model_costs.get(m, 0.0) + turn_cost
-                    for c in msg.get("content", []):
-                        if isinstance(c, dict) and c.get("type") == "tool_use":
-                            t = c.get("name", "?")
-                            tool_counts[t] = tool_counts.get(t, 0) + 1
-    except Exception as e:
-        sys.stderr.write(f"ERR {fpath}: {e}\n"); continue
-
-    if first_ts is None:
+results = []
+for key in set(meta) | set(sessions):
+    md = meta.get(key) or blank_meta()
+    s = sessions.get(key)
+    if s is None and md["first_ts"] is None:
         continue
-
-    if project is None:
-        home_slug = re.sub(r'[^a-zA-Z0-9]', '-', os.path.expanduser('~'))
-        rel = proj_raw[len(home_slug):].lstrip('-') if proj_raw.startswith(home_slug) else proj_raw
-        segs = re.split(r'-{2,}', rel)
-        project = re.sub(r'-+', ' ', segs[-1]).strip() or re.sub(r'-+', ' ', rel).strip() or proj_raw
-
-    dur = int((last_ts - first_ts).total_seconds() / 60) if first_ts and last_ts else 0
-    start = first_ts.astimezone().strftime("%b %d %I:%M %p") if first_ts else "?"
-    top_tools = sorted(tool_counts.items(), key=lambda x: -x[1])[:6]
-
+    s = s or blank_totals()
+    first_ts, last_ts = md["first_ts"], md["last_ts"]
     results.append(dict(
-        project=project, session_id=session_id, first_prompt=first_prompt,
-        user_msgs=user_msgs, input_tokens=int(inp), output_tokens=int(out),
-        cache_write=int(cw), cache_read=int(cr), cost=cost, model_costs=model_costs,
-        input_cost=input_cost, output_cost=output_cost, cw_cost=cw_cost, cr_cost=cr_cost,
-        dur_min=dur, top_tools=top_tools, models=sorted(models), start=start,
+        project=md["project"] or project_from_path(key),
+        session_id=os.path.splitext(os.path.basename(key))[0][:8],
+        first_prompt=md["first_prompt"], user_msgs=md["user_msgs"],
+        input_tokens=int(s["inp"]), output_tokens=int(s["out"]),
+        cache_write=int(s["cw"]), cache_read=int(s["cr"]), cost=s["cost"], model_costs=s["model_costs"],
+        input_cost=s["input_cost"], output_cost=s["output_cost"], cw_cost=s["cw_cost"], cr_cost=s["cr_cost"],
+        sub_cost=s["sub_cost"], calls=s["calls"],
+        dur_min=int((last_ts - first_ts).total_seconds() / 60) if first_ts and last_ts else 0,
+        top_tools=sorted(md["tool_counts"].items(), key=lambda x: -x[1])[:6],
+        models=sorted(s["models"]),
+        start=first_ts.astimezone().strftime("%b %d %I:%M %p") if first_ts else "?",
     ))
 
 results.sort(key=lambda r: -r["cost"])
@@ -189,6 +250,7 @@ lines.append(f"  TOKEN USAGE REPORT  --  {period_label}")
 lines.append(f"  Pricing: {pricing_note}")
 lines.append("=" * 66)
 lines.append(f"  Sessions:       {len(results)}")
+lines.append(f"  API calls:      {len(calls):,}  (from {raw_lines:,} log lines - each request counted once)")
 lines.append(f"  User messages:  {tm:,}")
 lines.append(f"  Output tokens:  {to:,}")
 lines.append(f"  Cache reads:    {tr:,}")
@@ -208,6 +270,8 @@ for r in results:
     lines.append(f"  [{r['session_id']}]  {r['project'][:52]}")
     lines.append(f"    Start:   {r['start']}  |  {r['dur_min']}min  |  {r['user_msgs']} msgs")
     lines.append(f"    Model:   {model_short}")
+    if r.get("sub_cost"):
+        lines.append(f"    Subagents: ${r['sub_cost']:.4f} of this session's cost")
     lines.append(f"    Tokens:  out={r['output_tokens']:,}  cache_r={r['cache_read']:,}")
     lines.append(f"    Cost:    ${r['cost']:.4f}  (in=${r['input_cost']:.2f}  out=${r['output_cost']:.2f}  cw=${r['cw_cost']:.2f}  cr=${r['cr_cost']:.2f})")
     if r["model_costs"] and len(r["model_costs"]) > 1:

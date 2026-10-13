@@ -61,20 +61,25 @@ Wait for the user's answers. Default: 24 hours, all projects.
 URL: https://platform.claude.com/docs/en/about-claude/pricing
 Prompt: Extract the complete model pricing table. For every model listed, give me:
 model name, input price per MTok, output price per MTok, 5-minute cache write price per MTok,
-cache read (hits & refreshes) price per MTok. Return as a simple list, one model per line.
+1-hour cache write price per MTok, cache read (hits & refreshes) price per MTok.
+Return as a simple list, one model per line.
 ```
 
 Parse the response into a prices dict. The format you're building toward is:
 
 ```json
 {
-  "claude-opus-4-7": {"input": 5.00, "output": 25.00, "cache_write": 6.25, "cache_read": 0.50},
-  "claude-sonnet-4-6": {"input": 3.00, "output": 15.00, "cache_write": 3.75, "cache_read": 0.30}
+  "claude-opus-4-7": {"input": 5.00, "output": 25.00, "cache_write": 6.25, "cache_write_1h": 10.00, "cache_read": 0.50},
+  "claude-sonnet-4-6": {"input": 3.00, "output": 15.00, "cache_write": 3.75, "cache_write_1h": 6.00, "cache_read": 0.30}
 }
 ```
 
+`cache_write` is the **5-minute** rate. `cache_write_1h` is optional; if it's missing the script uses
+2x input, which is Anthropic's 1-hour rate.
+
 **Matching rule**: the script matches model log strings against pricing keys using `startswith`,
-so dated variants like `claude-sonnet-4-6-20250929` automatically hit the right tier.
+**longest key first**, so dated variants like `claude-sonnet-4-6-20250929` hit the right tier and
+`claude-opus-5-5` is never priced as `claude-opus-5`.
 
 ---
 
@@ -104,7 +109,7 @@ work. The script separately flags any model that fell back to `default_prices`.
 {
   "pricing_source": "live from Anthropic docs, <date>",
   "prices": {
-    "<model-id>": {"input": 0.00, "output": 0.00, "cache_write": 0.00, "cache_read": 0.00}
+    "<model-id>": {"input": 0.00, "output": 0.00, "cache_write": 0.00, "cache_write_1h": 0.00, "cache_read": 0.00}
   },
   "default_prices": {"input": 3.00, "output": 15.00, "cache_write": 3.75, "cache_read": 0.30}
 }
@@ -129,11 +134,38 @@ The script prints results to stdout. With `--html` it also prints `HTML written 
 
 - **Always fetch live pricing** (Step 2) — pricing changes frequently. Never skip the WebFetch.
 - **Per-model pricing is mandatory** — cost each assistant turn by the model that generated it using that model's rates.
-- **`startswith` matching** — model strings in logs include dated variants (e.g. `claude-sonnet-4-6-20250929`). Match against base names with `startswith` so all variants hit the right price tier.
+- **Count each API request once.** Claude Code writes one log line per content block of a response
+  (thinking, text, each tool call), and **every one of those lines repeats the whole request's usage**.
+  Lines written mid-stream carry a partial `output_tokens`; the last line carries the final figure. A
+  resumed or forked session can copy the same lines into another file. The script keys on
+  `(message.id, requestId)`, keeps the line with the largest `output_tokens`, and attributes the request
+  to the first session that logged it. **Summing every line overstates spend by roughly 2x**, which
+  this skill did until 2026-10. Lines missing either id can't be matched and are counted as they are.
+- **`startswith` matching, longest key first** — model strings in logs include dated variants (e.g. `claude-sonnet-4-6-20250929`), and some model ids are prefixes of others (`claude-opus-5` / `claude-opus-5-5`).
 - **`<synthetic>` model** — skip for cost and model tracking; it's internal scaffolding with no billable tokens.
-- **Session files**: `~/.claude/projects/<project-dir>/<session-id>.jsonl`. Skip anything under `subagents/`.
+- **Session files**: `~/.claude/projects/<project-dir>/<session-id>.jsonl`. Subagent transcripts at
+  `<session-id>/subagents/*.jsonl` are real spend: they're counted under the session that spawned them
+  (shown as a `Subagents:` line), never as sessions of their own.
+- **1-hour cache writes** are priced at `cache_write_1h` (2x input if absent), 5-minute writes at `cache_write`.
 - **Project name**: read from the `cwd` field in the first user entry that has it (`os.path.basename(cwd)`). Falls back to slug-based extraction if no `cwd` found.
 - **Sort sessions by cost descending** — heaviest first.
 - **4 decimal places on costs** — small sessions otherwise show $0.00.
 - **Show pricing source** in both text and HTML output so the user knows if fallback was used.
 - **HTML pricing footer** — render the actual prices dict used as a table so the user can verify what rates were applied.
+
+---
+
+## Tests
+
+`tests/test_token_usage.py` runs the real script against small fake transcripts with hand-worked answers:
+a request logged as three lines, a mid-stream partial, a request copied into a resumed session, a model
+id that's a prefix of another, 1-hour vs 5-minute cache writes, a subagent, lines without ids, the time
+window and `<synthetic>`. Run it after any change to the script:
+
+```
+cd <skill-dir>
+python -m unittest discover -s tests -v
+```
+
+Every test fails against the pre-2026-10 script with a wrong dollar total, and passes now.
+
